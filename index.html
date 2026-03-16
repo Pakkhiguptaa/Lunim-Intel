@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lunim | Competitor Intelligence Dashboard</title>
+  <meta name="description" content="Lunim Intel - Real-time competitor intelligence powered by Tavily AI Research and GPT-4o Summarization">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">
+      <img src="lunim-logo.webp" alt="Lunim Logo" style="height: 32px; width: auto; margin-right: 12px;">
+      <span>Lunim Intel</span>
+    </div>
+    <ul class="nav-list">
+      <li class="nav-item active">
+        <span class="nav-item-number">01</span> Competitor Signals
+      </li>
+    </ul>
+
+    <!-- API Status in sidebar -->
+    <div class="sidebar-status">
+      <div class="status-indicator">
+        <span class="status-dot status-disconnected" id="api-status-dot"></span>
+        <span class="status-label" id="api-status-text">No API Keys</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header>
+      <div class="header-title">
+        <h1>Competitor Intelligence</h1>
+        <p>Live signals from Runway, Stage32, IDEO, and Coursera. Powered by Tavily AI Research + GPT-4o Summarization.</p>
+      </div>
+      <div class="header-actions">
+        <span id="last-updated" style="font-size: 0.75rem; color: var(--text-secondary); margin-right: 1rem;">LAST UPDATED: —</span>
+        <button class="btn-primary" id="refresh-action">
+          <svg style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path></svg>
+          Run Intelligent Search
+        </button>
+      </div>
+    </header>
+
+    <div class="dashboard-grid">
+      <!-- Intelligence Feed -->
+      <section class="card signal-feed">
+        <div class="card-header">
+          <h2 class="card-title">Live Press Signals</h2>
+          <span class="powered-badge">Tavily + GPT-4o</span>
+        </div>
+        <div class="signal-list" id="intelligence-list">
+          <!-- Populated by JavaScript -->
+          <div class="signal-item">
+            <div class="signal-time">
+              <span class="signal-dot dot-cached"></span>
+              CACHED...
+            </div>
+            <div class="one-line-summary">Enter your API keys below and click "Run Intelligent Search" to fetch live intelligence.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Competitor Watch Grid -->
+      <div class="competitor-watch-grid">
+        <!-- Runway -->
+        <div class="comp-card">
+          <div class="comp-info">
+            <div class="comp-logo" style="background: #e11d48;">R</div>
+            <div class="comp-meta">
+              <h3>Runway</h3>
+              <p>Generative AI Video</p>
+            </div>
+            <span class="tag tag-high-growth" style="margin-left: auto;">High Growth</span>
+          </div>
+          <p style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem;">
+            Dominating the AI video space with Gen-4.5 and real-time avatars. Recently raised $315M Series E.
+          </p>
+          <div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 0.75rem;">
+            <span>Valuation: $5.3B</span>
+            <span style="color: var(--accent-success);">+95% Trend</span>
+          </div>
+        </div>
+
+        <!-- Stage32 -->
+        <div class="comp-card">
+          <div class="comp-info">
+            <div class="comp-logo" style="background: #2563eb;">S</div>
+            <div class="comp-meta">
+              <h3>Stage32</h3>
+              <p>Entertainment Network</p>
+            </div>
+            <span class="tag tag-steady" style="margin-left: auto;">Steady</span>
+          </div>
+          <p style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem;">
+            Expanding global footprint with Hollywood training programs in the Caribbean and major film contests.
+          </p>
+          <div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 0.75rem;">
+            <span>Members: 1M+</span>
+            <span style="color: var(--accent-primary);">Active</span>
+          </div>
+        </div>
+
+        <!-- IDEO -->
+        <div class="comp-card">
+          <div class="comp-info">
+            <div class="comp-logo" style="background: #10b981;">I</div>
+            <div class="comp-meta">
+              <h3>IDEO</h3>
+              <p>Design Thinking</p>
+            </div>
+            <span class="tag tag-steady" style="margin-left: auto;">Steady</span>
+          </div>
+          <p style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem;">
+            Pivoting to "Sentient Branding" and strategic flexibility to handle AI uncertainty in 2026.
+          </p>
+          <div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 0.75rem;">
+            <span>Focus: Future Tech</span>
+            <span style="color: var(--accent-tertiary);">Pivoting</span>
+          </div>
+        </div>
+
+        <!-- Coursera -->
+        <div class="comp-card">
+          <div class="comp-info">
+            <div class="comp-logo" style="background: #7c3aed;">C</div>
+            <div class="comp-meta">
+              <h3>Coursera</h3>
+              <p>Higher Education</p>
+            </div>
+            <span class="tag tag-trending" style="margin-left: auto;">Trending</span>
+          </div>
+          <p style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem;">
+            Massive expansion via Udemy acquisition and core GPT integrations. Revenue at record $757M.
+          </p>
+          <div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 0.75rem;">
+            <span>Revenue: $757M</span>
+            <span style="color: var(--accent-success);">Rising</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Config Section -->
+      <section class="card api-config">
+        <div class="config-header">
+          <h2 class="card-title" style="margin-bottom: 0.25rem;">Live Connector</h2>
+          <p style="font-size: 0.7rem; color: var(--text-secondary);">Enter your API keys to enable live intelligence</p>
+        </div>
+        <div class="api-inputs">
+          <div class="api-field">
+            <label class="api-label" for="tavily-key">🔍 Tavily Search API</label>
+            <div class="input-wrapper">
+              <input type="password" id="tavily-key" placeholder="tvly-..." autocomplete="off">
+              <button class="toggle-visibility" type="button" title="Toggle visibility">👁</button>
+            </div>
+          </div>
+          <div class="api-field">
+            <label class="api-label" for="github-key">🤖 GitHub Models Token (GPT-4o)</label>
+            <div class="input-wrapper">
+              <input type="password" id="github-key" placeholder="github_pat_..." autocomplete="off">
+              <button class="toggle-visibility" type="button" title="Toggle visibility">👁</button>
+            </div>
+          </div>
+        </div>
+        <div class="config-note">
+          <p>Tavily fetches live press data. GitHub Models (GPT-4o) creates intelligent summaries.</p>
+          <a href="https://tavily.com" target="_blank" rel="noopener" class="config-link">Get Tavily Key →</a>
+          <a href="https://github.com/settings/tokens" target="_blank" rel="noopener" class="config-link">Get GitHub Token →</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
