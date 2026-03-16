@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lunim | Competitor Intelligence Dashboard</title>
-  <meta name="description" content="Lunim Intel - Real-time competitor intelligence powered by Tavily AI Research and GPT-4o Summarization">
+  <meta name="description" content="Lunim Intel - Real-time competitor intelligence dashboard">
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,7 +35,7 @@
     <header>
       <div class="header-title">
         <h1>Competitor Intelligence</h1>
-        <p>Live signals from Runway, Stage32, IDEO, and Coursera. Powered by Tavily AI Research + GPT-4o Summarization.</p>
+        <p>Live signals from Runway, Stage32, IDEO, and Coursera. Powered by Lunim Intelligence Engine.</p>
       </div>
       <div class="header-actions">
         <span id="last-updated" style="font-size: 0.75rem; color: var(--text-secondary); margin-right: 1rem;">LAST UPDATED: —</span>
@@ -51,7 +51,7 @@
       <section class="card signal-feed">
         <div class="card-header">
           <h2 class="card-title">Live Press Signals</h2>
-          <span class="powered-badge">Tavily + GPT-4o</span>
+          <span class="powered-badge">Lunim Engine</span>
         </div>
         <div class="signal-list" id="intelligence-list">
           <!-- Populated by JavaScript -->
@@ -152,14 +152,14 @@
         </div>
         <div class="api-inputs">
           <div class="api-field">
-            <label class="api-label" for="tavily-key">🔍 Tavily Search API</label>
+            <label class="api-label" for="tavily-key">🔍 Search API Key</label>
             <div class="input-wrapper">
               <input type="password" id="tavily-key" placeholder="tvly-..." autocomplete="off">
               <button class="toggle-visibility" type="button" title="Toggle visibility">👁</button>
             </div>
           </div>
           <div class="api-field">
-            <label class="api-label" for="github-key">🤖 GitHub Models Token (GPT-4o)</label>
+            <label class="api-label" for="github-key">🤖 AI Summarization Token</label>
             <div class="input-wrapper">
               <input type="password" id="github-key" placeholder="github_pat_..." autocomplete="off">
               <button class="toggle-visibility" type="button" title="Toggle visibility">👁</button>
@@ -167,9 +167,7 @@
           </div>
         </div>
         <div class="config-note">
-          <p>Tavily fetches live press data. GitHub Models (GPT-4o) creates intelligent summaries.</p>
-          <a href="https://tavily.com" target="_blank" rel="noopener" class="config-link">Get Tavily Key →</a>
-          <a href="https://github.com/settings/tokens" target="_blank" rel="noopener" class="config-link">Get GitHub Token →</a>
+          <p>Pre-configured for live intelligence. Keys are managed internally.</p>
         </div>
       </section>
     </div>

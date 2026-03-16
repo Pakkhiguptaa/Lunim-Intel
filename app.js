@@ -170,7 +170,7 @@ async function handleRefresh() {
         <span class="signal-dot dot-working"></span>
         ANALYZING...
       </div>
-      <div class="one-line-summary">Searching live press signals with Tavily AI and summarizing with GPT-4o...</div>
+      <div class="one-line-summary">Searching live press signals and generating intelligent summaries...</div>
     </div>
   `;
 
