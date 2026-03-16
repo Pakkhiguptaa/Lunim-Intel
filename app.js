@@ -1,8 +1,8 @@
 // ─── Lunim Intel - Competitor Intelligence Dashboard ───
 // Powered by Tavily Search + GitHub Models (GPT-4o) Summarization
 
-const DEFAULT_TAVILY_KEY = '';
-const DEFAULT_GITHUB_TOKEN = '';
+const DEFAULT_TAVILY_KEY = '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';
+const DEFAULT_GITHUB_TOKEN = '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';
 
 const companies = [
   { query: 'Runway AI latest news funding product launch 2026', name: 'Runway' },
