@@ -351,20 +351,27 @@ header {
 
 /* ─── RED GLOW for competitor panel ─── */
 .panel-red-glow {
-  border-color: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.35);
   box-shadow:
-    0 0 30px rgba(239, 68, 68, 0.08),
-    0 0 60px rgba(239, 68, 68, 0.04),
-    inset 0 0 30px rgba(239, 68, 68, 0.02);
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.6), rgba(30, 10, 10, 0.3));
+    0 0 20px rgba(239, 68, 68, 0.15),
+    0 0 50px rgba(239, 68, 68, 0.08),
+    0 0 100px rgba(239, 68, 68, 0.04),
+    inset 0 1px 0 rgba(239, 68, 68, 0.1);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.6), rgba(50, 10, 10, 0.25));
+  animation: redPulse 3s ease-in-out infinite;
 }
 
 .panel-red-glow:hover {
-  border-color: rgba(239, 68, 68, 0.4);
+  border-color: rgba(239, 68, 68, 0.5);
   box-shadow:
-    0 0 40px rgba(239, 68, 68, 0.12),
-    0 0 80px rgba(239, 68, 68, 0.06),
-    inset 0 0 40px rgba(239, 68, 68, 0.03);
+    0 0 30px rgba(239, 68, 68, 0.2),
+    0 0 60px rgba(239, 68, 68, 0.12),
+    0 0 120px rgba(239, 68, 68, 0.06);
+}
+
+@keyframes redPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(239,68,68,0.12), 0 0 50px rgba(239,68,68,0.06); }
+  50%      { box-shadow: 0 0 30px rgba(239,68,68,0.2), 0 0 80px rgba(239,68,68,0.1); }
 }
 
 .panel-header {
@@ -591,14 +598,11 @@ header {
 }
 
 /* ═══════════ RESPONSIVE ═══════════ */
-@media (max-width: 1100px) {
-  .split-panels { flex-direction: column; }
-  .panel-left, .panel-right { flex: none; max-height: 400px; }
-}
-
 @media (max-width: 768px) {
   body { flex-direction: column; }
   .sidebar { width: 100%; max-height: 40vh; }
   .main-content { padding: 1.5rem; }
+  .split-panels { flex-direction: column; }
+  .panel-left, .panel-right { flex: none; max-height: 400px; }
   header { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
 }
