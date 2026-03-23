@@ -16,11 +16,29 @@
       <img src="lunim-logo.webp" alt="Lunim Logo" style="height: 32px; width: auto; margin-right: 12px;">
       <span>Lunim Intel</span>
     </div>
-    <ul class="nav-list">
-      <li class="nav-item active">
-        <span class="nav-item-number">01</span> Competitor Signals
-      </li>
-    </ul>
+
+    <!-- UI Prompt Section strictly managed in sidebar -->
+    <div class="sidebar-prompt" id="prompt-section">
+      <div class="sidebar-prompt-header">
+        <span class="prompt-title">⚡ Live Prompt Engine</span>
+        <button id="reset-prompt" class="prompt-reset-btn" title="Reset Default Prompt">↻ Reset</button>
+      </div>
+      <textarea id="intelligence-prompt" class="sidebar-prompt-textarea" spellcheck="false">You are a competitive intelligence analyst for Lunim — a creative technology company.
+
+Identify the top 20 competitors for Lunim across these four spaces:
+1. Film Community & Entertainment Networking (e.g. Stage32, Coverfly, The Black List)
+2. UX Consulting & Design Thinking (e.g. IDEO, Frog Design, Fjord/Accenture Song)
+3. AI Studio & Video Generation (e.g. Runway, Pika, Synthesia, HeyGen)
+4. AI Education & Online Learning (e.g. Coursera, Udemy, Skillshare, MasterClass)
+
+For each competitor return a JSON array of objects with:
+- "name": company name
+- "space": which of the 4 spaces they belong to (use short labels: "Film & Entertainment", "UX & Design", "AI Video & Studio", "AI Education")
+- "query": a Tavily web-search query to find their latest 2026 news, funding, product launches, or partnerships
+
+Return ONLY the JSON array, no markdown, no explanation.</textarea>
+      <p class="sidebar-prompt-hint">💡 Type above to discover different competitors</p>
+    </div>
 
     <!-- API Status in sidebar -->
     <div class="sidebar-status">
@@ -48,34 +66,24 @@
 
     <div class="dashboard-grid">
 
-      <!-- Intelligence Prompt -->
-      <section class="card prompt-section" id="prompt-section">
+      <!-- Left Side: Live Press Signals (Summaries & Links) -->
+      <section class="card signal-feed" id="signal-feed-section">
         <div class="card-header">
-          <h2 class="card-title">Intelligence Prompt</h2>
-          <span class="powered-badge">Editable</span>
+          <h2 class="card-title">Live Press Signals</h2>
+          <span class="powered-badge" id="signal-count-badge">0 Signals</span>
         </div>
-        <p class="prompt-description">This prompt instructs the LLM to identify competitors, then Tavily fetches live press for each. The LLM summarises what the press is saying and assigns a market trend. Edit freely.</p>
-        <textarea id="intelligence-prompt" class="prompt-textarea" spellcheck="false">You are a competitive intelligence analyst for Lunim — a creative technology company.
-
-Identify the top 20 competitors for Lunim across these four spaces:
-1. Film Community & Entertainment Networking (e.g. Stage32, Coverfly, The Black List)
-2. UX Consulting & Design Thinking (e.g. IDEO, Frog Design, Fjord/Accenture Song)
-3. AI Studio & Video Generation (e.g. Runway, Pika, Synthesia, HeyGen)
-4. AI Education & Online Learning (e.g. Coursera, Udemy, Skillshare, MasterClass)
-
-For each competitor return a JSON array of objects with:
-- "name": company name
-- "space": which of the 4 spaces they belong to (use short labels: "Film & Entertainment", "UX & Design", "AI Video & Studio", "AI Education")
-- "query": a Tavily web-search query to find their latest 2026 news, funding, product launches, or partnerships
-
-Return ONLY the JSON array, no markdown, no explanation.</textarea>
-        <div class="prompt-footer">
-          <span class="prompt-hint">💡 Tip: Change industries, competitor count, or add your own companies</span>
-          <button class="btn-secondary" id="reset-prompt" title="Reset to default prompt">↻ Reset</button>
+        <div class="signal-list" id="intelligence-list">
+          <div class="signal-item">
+            <div class="signal-time">
+              <span class="signal-dot dot-cached"></span>
+              WAITING...
+            </div>
+            <div class="one-line-summary">Enter your API keys and click "Run Intelligent Search" to discover competitors and fetch live press intelligence.</div>
+          </div>
         </div>
       </section>
 
-      <!-- Competitor Watch Grid -->
+      <!-- Right Side: Competitor Landscape (Logos, Trends) -->
       <section class="card competitor-section" id="competitor-section">
         <div class="card-header">
           <h2 class="card-title">Competitor Landscape</h2>
@@ -90,23 +98,6 @@ Return ONLY the JSON array, no markdown, no explanation.</textarea>
                 <p>Run a search to discover 20 competitors</p>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Intelligence Feed -->
-      <section class="card signal-feed" id="signal-feed-section">
-        <div class="card-header">
-          <h2 class="card-title">Live Press Signals</h2>
-          <span class="powered-badge" id="signal-count-badge">0 Signals</span>
-        </div>
-        <div class="signal-list" id="intelligence-list">
-          <div class="signal-item">
-            <div class="signal-time">
-              <span class="signal-dot dot-cached"></span>
-              WAITING...
-            </div>
-            <div class="one-line-summary">Enter your API keys and click "Run Intelligent Search" to discover competitors and fetch live press intelligence.</div>
           </div>
         </div>
       </section>
