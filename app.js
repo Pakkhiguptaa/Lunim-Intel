@@ -3,8 +3,9 @@
 
 // Keys are now stored in and loaded from localStorage to avoid hardcoding on GitHub.
 
-const DEFAULT_PROMPT = `Identify the top 20 competitors for Lunim — a creative technology company — across these four spaces:
+const DEFAULT_PROMPT = `You are a competitive intelligence analyst for Lunim — a creative technology company.
 
+Identify the top 20 competitors for Lunim across these four spaces:
 1. Film Community & Entertainment Networking (e.g. Stage32, Coverfly, The Black List)
 2. UX Consulting & Design Thinking (e.g. IDEO, Frog Design, Fjord/Accenture Song)
 3. AI Studio & Video Generation (e.g. Runway, Pika, Synthesia, HeyGen)
@@ -12,19 +13,48 @@ const DEFAULT_PROMPT = `Identify the top 20 competitors for Lunim — a creative
 
 For each competitor return a JSON array of objects with:
 - "name": company name
-- "space": which of the 4 spaces they belong to
+- "space": which of the 4 spaces they belong to (use short labels: "Film & Entertainment", "UX & Design", "AI Video & Studio", "AI Education")
 - "query": a Tavily web-search query to find their latest 2026 news, funding, product launches, or partnerships
 
 Return ONLY the JSON array, no markdown, no explanation.`;
 
-// Space color palette for dynamic competitor cards
+// Space color palette
 const SPACE_COLORS = {
-  'Film Community & Entertainment Networking': '#e11d48',
-  'UX Consulting & Design Thinking': '#10b981',
-  'AI Studio & Video Generation': '#7c3aed',
-  'AI Education & Online Learning': '#2563eb',
+  'film': '#e11d48',
+  'ux': '#10b981',
+  'ai video': '#7c3aed',
+  'ai education': '#2563eb',
 };
-const SPACE_COLORS_ARRAY = ['#e11d48', '#2563eb', '#10b981', '#7c3aed', '#f59e0b', '#0ea5e9', '#ec4899', '#8b5cf6'];
+
+function getSpaceColor(space) {
+  if (!space) return '#6366f1';
+  const s = space.toLowerCase();
+  if (s.includes('film') || s.includes('entertainment')) return SPACE_COLORS['film'];
+  if (s.includes('ux') || s.includes('design')) return SPACE_COLORS['ux'];
+  if (s.includes('video') || s.includes('studio') || s.includes('generat')) return SPACE_COLORS['ai video'];
+  if (s.includes('education') || s.includes('learning')) return SPACE_COLORS['ai education'];
+  return '#6366f1';
+}
+
+// Trend tag classes
+const TREND_CLASSES = {
+  'trending': 'tag-trending',
+  'high growth': 'tag-high-growth',
+  'growing': 'tag-trending',
+  'steady': 'tag-steady',
+  'stagnant': 'tag-stagnant',
+  'declining': 'tag-declining',
+  'emerging': 'tag-emerging',
+};
+
+function getTrendClass(trend) {
+  if (!trend) return 'tag-steady';
+  const t = trend.toLowerCase();
+  for (const [key, cls] of Object.entries(TREND_CLASSES)) {
+    if (t.includes(key)) return cls;
+  }
+  return 'tag-steady';
+}
 
 // ─── DOM References ───
 const listElement = document.getElementById('intelligence-list');
@@ -64,72 +94,88 @@ if (resetPromptBtn) {
   });
 }
 
-// ─── Render Signals ───
+// ─── Render Signals (with source links) ───
 function renderSignals(data) {
   listElement.innerHTML = '';
   data.forEach((signal, index) => {
     const item = document.createElement('div');
     item.className = 'signal-item';
-    item.style.animationDelay = `${index * 0.06}s`;
+    item.style.animationDelay = `${index * 0.05}s`;
     item.style.opacity = '0';
 
     const isLive = signal.time === 'Live Now';
     const isError = signal.time === 'Error';
-    const isDiscovery = signal.time === 'Discovery';
+
+    // Build source links HTML
+    let sourcesHtml = '';
+    if (signal.sources && signal.sources.length > 0) {
+      const links = signal.sources.slice(0, 3).map((src, i) => {
+        const domain = new URL(src.url).hostname.replace('www.', '');
+        const title = src.title ? src.title.substring(0, 40) : domain;
+        return `<a href="${src.url}" target="_blank" rel="noopener" class="source-link" title="${src.title || src.url}">${title}${src.title && src.title.length > 40 ? '…' : ''}</a>`;
+      }).join('');
+      sourcesHtml = `<div class="signal-sources">${links}</div>`;
+    }
 
     item.innerHTML = `
       <div class="signal-time">
-        <span class="signal-dot ${isLive ? 'dot-live' : isError ? 'dot-error' : isDiscovery ? 'dot-discovery' : 'dot-cached'}"></span>
+        <span class="signal-dot ${isLive ? 'dot-live' : isError ? 'dot-error' : 'dot-cached'}"></span>
         ${signal.time.toUpperCase()} • ${signal.company.toUpperCase()}
       </div>
       <div class="one-line-summary">${signal.summary}</div>
+      ${sourcesHtml}
     `;
     listElement.appendChild(item);
   });
 
-  // Update signal count badge
   if (signalCountBadge) {
     signalCountBadge.textContent = `${data.length} Signal${data.length !== 1 ? 's' : ''}`;
   }
 }
 
-// ─── Render Competitor Cards Dynamically ───
+// ─── Render Competitor Cards (rich version with trend, summary, sources) ───
 function renderCompetitorCards(competitors) {
   competitorGrid.innerHTML = '';
   competitors.forEach((comp, index) => {
-    const colorKey = Object.keys(SPACE_COLORS).find(k =>
-      comp.space && comp.space.toLowerCase().includes(k.toLowerCase().split(' ')[0].toLowerCase())
-    );
-    const color = colorKey
-      ? SPACE_COLORS[colorKey]
-      : SPACE_COLORS_ARRAY[index % SPACE_COLORS_ARRAY.length];
+    const color = getSpaceColor(comp.space);
+    const trendClass = getTrendClass(comp.trend);
+    const trendLabel = comp.trend || 'Pending';
 
     const card = document.createElement('div');
     card.className = 'comp-card';
-    card.style.animationDelay = `${index * 0.05}s`;
-    card.style.opacity = '0';
-    card.style.animation = `fadeIn 0.4s ease forwards ${index * 0.05}s`;
+    card.style.animation = `fadeIn 0.4s ease forwards ${index * 0.04}s`;
 
-    // Determine short space label
+    // Short space label
     const spaceLabel = comp.space || 'Unknown';
-    const shortSpace = spaceLabel.length > 25 ? spaceLabel.substring(0, 22) + '…' : spaceLabel;
+
+    // Build summary
+    const summary = comp.summary || '';
+
+    // Build source links
+    let sourcesHtml = '';
+    if (comp.sources && comp.sources.length > 0) {
+      const links = comp.sources.slice(0, 2).map(src => {
+        const domain = new URL(src.url).hostname.replace('www.', '');
+        return `<a href="${src.url}" target="_blank" rel="noopener" class="source-chip" title="${src.title || src.url}">🔗 ${domain}</a>`;
+      }).join('');
+      sourcesHtml = `<div class="comp-sources">${links}</div>`;
+    }
 
     card.innerHTML = `
       <div class="comp-info">
         <div class="comp-logo" style="background: ${color};">${comp.name.charAt(0)}</div>
         <div class="comp-meta">
           <h3>${comp.name}</h3>
-          <p>${shortSpace}</p>
+          <p>${spaceLabel}</p>
         </div>
+        <span class="tag ${trendClass}" style="margin-left: auto;">${trendLabel}</span>
       </div>
-      <div class="comp-status">
-        <span class="tag" style="background: ${color}22; color: ${color};">${comp.status || 'Discovered'}</span>
-      </div>
+      ${summary ? `<p class="comp-summary">${summary}</p>` : ''}
+      ${sourcesHtml}
     `;
     competitorGrid.appendChild(card);
   });
 
-  // Update competitor count badge
   if (competitorCountBadge) {
     competitorCountBadge.textContent = `${competitors.length} Found`;
   }
@@ -174,7 +220,7 @@ function checkApiStatus() {
 // ─── LLM Call (GitHub Models GPT-4o) ───
 async function callLLM(systemPrompt, userPrompt, maxTokens = 2000) {
   const token = githubInput ? githubInput.value.trim() : '';
-  if (!token) throw new Error('LLM API Key (GitHub Token) is required for competitor discovery.');
+  if (!token) throw new Error('LLM API Key (GitHub Token) is required.');
 
   const response = await fetch('https://models.inference.ai.azure.com/chat/completions', {
     method: 'POST',
@@ -215,7 +261,7 @@ async function fetchTavilySearch(query) {
       query: query,
       search_depth: 'advanced',
       include_answer: true,
-      max_results: 3
+      max_results: 5
     })
   });
 
@@ -226,18 +272,42 @@ async function fetchTavilySearch(query) {
   return await response.json();
 }
 
-// ─── Summarize with GPT-4o ───
-async function summarizeWithGPT4o(rawText, companyName) {
+// ─── Analyze competitor: LLM reads Tavily results and returns structured analysis ───
+async function analyzeCompetitor(rawContent, companyName, sources) {
+  const token = githubInput ? githubInput.value.trim() : '';
+  if (!token) {
+    return {
+      summary: rawContent.substring(0, 200),
+      trend: 'Unknown'
+    };
+  }
+
   try {
     const result = await callLLM(
-      'You are a competitive intelligence analyst. Write a concise, one-line press summary (max 40 words) focusing on the most important recent development. Be specific with names, numbers, and dates.',
-      `Summarize the latest press intelligence for ${companyName}:\n\n${rawText}`,
-      80
+      `You are a competitive intelligence analyst writing for a strategy team. You MUST respond with ONLY valid JSON, no markdown fences. Analyze the press coverage and return a JSON object with:
+- "summary": A concise 1-2 sentence actionable summary (max 50 words) of what the press is saying — include specific product names, funding rounds, revenue numbers, partnerships, or launches. Be specific, not generic.
+- "trend": One of exactly these labels based on what the press signals indicate: "Trending" (strong positive momentum, new launches, big funding), "High Growth" (rapid expansion, major deals), "Steady" (stable, incremental progress), "Emerging" (new entrant, early stage), "Stagnant" (low activity, no major news), "Declining" (layoffs, losses, negative press)
+
+Return ONLY the JSON object.`,
+      `Analyze the latest press intelligence for ${companyName}:\n\n${rawContent}`,
+      150
     );
-    return result || rawText.substring(0, 250);
+
+    let parsed;
+    try {
+      let cleaned = result.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
+      parsed = JSON.parse(cleaned);
+    } catch {
+      return { summary: result.substring(0, 200), trend: 'Steady' };
+    }
+
+    return {
+      summary: parsed.summary || rawContent.substring(0, 200),
+      trend: parsed.trend || 'Steady'
+    };
   } catch (err) {
-    console.warn('GPT-4o summarization error:', err);
-    return rawText.substring(0, 250);
+    console.warn(`Analysis error for ${companyName}:`, err);
+    return { summary: rawContent.substring(0, 200), trend: 'Unknown' };
   }
 }
 
@@ -264,7 +334,7 @@ async function handleRefresh() {
 
   try {
     // ═══════════ STEP 1: LLM discovers competitors ═══════════
-    showProgress('STEP 1 — DISCOVERING COMPETITORS...', 'Sending your prompt to the LLM to identify competitors...');
+    showProgress('STEP 1 / 3 — DISCOVERING COMPETITORS...', 'Sending your prompt to the LLM to identify the top competitors...');
 
     const llmResponse = await callLLM(
       'You are a market research analyst. You MUST respond with ONLY a valid JSON array. No markdown fences, no explanations. Each object must have "name", "space", and "query" keys.',
@@ -272,87 +342,105 @@ async function handleRefresh() {
       3000
     );
 
-    // Parse the JSON response
+    // Parse JSON
     let competitors;
     try {
-      // Strip potential markdown fencing
       let cleaned = llmResponse.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
       competitors = JSON.parse(cleaned);
     } catch (parseErr) {
-      throw new Error(`Failed to parse LLM competitor list. Raw response: ${llmResponse.substring(0, 300)}`);
+      throw new Error(`Failed to parse LLM competitor list. Raw: ${llmResponse.substring(0, 300)}`);
     }
 
     if (!Array.isArray(competitors) || competitors.length === 0) {
       throw new Error('LLM returned an empty or invalid competitor list.');
     }
 
-    // Show discovered competitors in the grid
-    renderCompetitorCards(competitors);
+    // Show initial competitor cards (pending state)
+    renderCompetitorCards(competitors.map(c => ({ ...c, trend: 'Pending', summary: '' })));
 
-    // Show discovery signals
-    const discoverySignals = competitors.map(c => ({
-      company: c.name,
-      summary: `Discovered in "${c.space}" — search query: "${c.query}"`,
-      time: 'Discovery'
-    }));
-    renderSignals(discoverySignals);
-
-    // ═══════════ STEP 2: Tavily search for each competitor ═══════════
+    // ═══════════ STEP 2: Tavily search each competitor ═══════════
     showProgress(
-      `STEP 2 — SEARCHING ${competitors.length} COMPETITORS...`,
-      'Querying Tavily for live press signals on each discovered competitor...'
+      `STEP 2 / 3 — SEARCHING PRESS FOR ${competitors.length} COMPETITORS...`,
+      'Querying Tavily for live press coverage on each competitor...'
     );
 
+    const enrichedCompetitors = [];
     const liveSignals = [];
-    const updatedCompetitors = [...competitors];
 
     for (let i = 0; i < competitors.length; i++) {
       const company = competitors[i];
-      setApiStatus('working', `Searching ${i + 1}/${competitors.length}...`);
+      setApiStatus('working', `Searching ${i + 1}/${competitors.length}: ${company.name}`);
 
       try {
         const searchResults = await fetchTavilySearch(company.query);
 
+        // Collect raw content
         let rawContent = searchResults.answer || '';
+        const sources = [];
+
         if (searchResults.results && searchResults.results.length > 0) {
+          searchResults.results.slice(0, 5).forEach(r => {
+            sources.push({ url: r.url, title: r.title || '' });
+          });
           const snippets = searchResults.results
-            .slice(0, 3)
+            .slice(0, 4)
             .map(r => r.content)
-            .join(' ');
-          rawContent = rawContent ? `${rawContent}\n\nAdditional context:\n${snippets}` : snippets;
+            .join('\n');
+          rawContent = rawContent ? `${rawContent}\n\nPress snippets:\n${snippets}` : snippets;
         }
 
-        if (!rawContent) {
-          rawContent = 'No recent press coverage found.';
+        if (!rawContent) rawContent = 'No recent press coverage found.';
+
+        // ═══════════ STEP 3: LLM analyses & summarises ═══════════
+        if (i === 0) {
+          showProgress(
+            `STEP 3 / 3 — ANALYSING PRESS & ASSIGNING TRENDS...`,
+            `LLM is reading press for ${company.name} and ${competitors.length - 1} more...`
+          );
         }
 
-        // Step 3: Summarize
-        const summary = await summarizeWithGPT4o(rawContent, company.name);
+        const analysis = await analyzeCompetitor(rawContent, company.name, sources);
+
+        enrichedCompetitors.push({
+          ...company,
+          summary: analysis.summary,
+          trend: analysis.trend,
+          sources: sources
+        });
 
         liveSignals.push({
           company: company.name,
-          summary: summary.replace(/\n/g, ' '),
-          time: 'Live Now'
+          summary: analysis.summary,
+          time: 'Live Now',
+          sources: sources
         });
 
-        // Update competitor status
-        updatedCompetitors[i] = { ...company, status: 'Live' };
+        // Update cards progressively
+        const pendingRemaining = competitors.slice(i + 1).map(c => ({ ...c, trend: 'Pending', summary: '' }));
+        renderCompetitorCards([...enrichedCompetitors, ...pendingRemaining]);
+
       } catch (err) {
         console.error(`Error for ${company.name}:`, err);
+        enrichedCompetitors.push({
+          ...company,
+          summary: `⚠ ${err.message}`,
+          trend: 'Unknown',
+          sources: []
+        });
         liveSignals.push({
           company: company.name,
           summary: `⚠ ${err.message}`,
-          time: 'Error'
+          time: 'Error',
+          sources: []
         });
-        updatedCompetitors[i] = { ...company, status: 'Error' };
       }
     }
 
     // Final render
+    renderCompetitorCards(enrichedCompetitors);
     renderSignals(liveSignals);
-    renderCompetitorCards(updatedCompetitors);
 
-    // Update last-updated timestamp
+    // Update timestamp
     const lastUpdated = document.getElementById('last-updated');
     if (lastUpdated) {
       const now = new Date();
@@ -382,7 +470,6 @@ checkApiStatus();
 // ─── Event Listeners ───
 refreshBtn.addEventListener('click', handleRefresh);
 
-// Update status and save to LocalStorage when keys change
 if (tavilyInput) {
   tavilyInput.addEventListener('input', () => {
     localStorage.setItem('tavily-key', tavilyInput.value.trim());

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lunim | Competitor Intelligence Dashboard</title>
-  <meta name="description" content="Lunim Intel - Real-time competitor intelligence dashboard">
+  <meta name="description" content="Lunim Intel - Real-time competitor intelligence dashboard powered by AI">
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,7 +35,7 @@
     <header>
       <div class="header-title">
         <h1>Competitor Intelligence</h1>
-        <p>AI-powered live competitor discovery across Film, UX, AI Studio & Education. Powered by Lunim Intelligence Engine.</p>
+        <p>AI-powered live competitor discovery &amp; press analysis across Film, UX, AI Studio &amp; Education.</p>
       </div>
       <div class="header-actions">
         <span id="last-updated" style="font-size: 0.75rem; color: var(--text-secondary); margin-right: 1rem;">LAST UPDATED: —</span>
@@ -49,14 +49,15 @@
     <div class="dashboard-grid">
 
       <!-- Intelligence Prompt -->
-      <section class="card prompt-section">
+      <section class="card prompt-section" id="prompt-section">
         <div class="card-header">
           <h2 class="card-title">Intelligence Prompt</h2>
           <span class="powered-badge">Editable</span>
         </div>
-        <p class="prompt-description">This prompt is sent to the LLM to discover competitors. Edit it freely to target different industries, geographies, or company types.</p>
-        <textarea id="intelligence-prompt" class="prompt-textarea" spellcheck="false">Identify the top 20 competitors for Lunim — a creative technology company — across these four spaces:
+        <p class="prompt-description">This prompt instructs the LLM to identify competitors, then Tavily fetches live press for each. The LLM summarises what the press is saying and assigns a market trend. Edit freely.</p>
+        <textarea id="intelligence-prompt" class="prompt-textarea" spellcheck="false">You are a competitive intelligence analyst for Lunim — a creative technology company.
 
+Identify the top 20 competitors for Lunim across these four spaces:
 1. Film Community & Entertainment Networking (e.g. Stage32, Coverfly, The Black List)
 2. UX Consulting & Design Thinking (e.g. IDEO, Frog Design, Fjord/Accenture Song)
 3. AI Studio & Video Generation (e.g. Runway, Pika, Synthesia, HeyGen)
@@ -64,50 +65,48 @@
 
 For each competitor return a JSON array of objects with:
 - "name": company name
-- "space": which of the 4 spaces they belong to
+- "space": which of the 4 spaces they belong to (use short labels: "Film & Entertainment", "UX & Design", "AI Video & Studio", "AI Education")
 - "query": a Tavily web-search query to find their latest 2026 news, funding, product launches, or partnerships
 
 Return ONLY the JSON array, no markdown, no explanation.</textarea>
         <div class="prompt-footer">
-          <span class="prompt-hint">💡 Tip: Change industries, competitor count, or add your own companies above</span>
+          <span class="prompt-hint">💡 Tip: Change industries, competitor count, or add your own companies</span>
           <button class="btn-secondary" id="reset-prompt" title="Reset to default prompt">↻ Reset</button>
         </div>
       </section>
 
+      <!-- Competitor Watch Grid -->
+      <section class="card competitor-section" id="competitor-section">
+        <div class="card-header">
+          <h2 class="card-title">Competitor Landscape</h2>
+          <span class="powered-badge" id="competitor-count-badge">0 Found</span>
+        </div>
+        <div class="competitor-watch-grid" id="competitor-grid">
+          <div class="comp-card comp-card-empty">
+            <div class="comp-info">
+              <div class="comp-logo" style="background: rgba(59, 130, 246, 0.2);">?</div>
+              <div class="comp-meta">
+                <h3>Waiting for Search</h3>
+                <p>Run a search to discover 20 competitors</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Intelligence Feed -->
-      <section class="card signal-feed">
+      <section class="card signal-feed" id="signal-feed-section">
         <div class="card-header">
           <h2 class="card-title">Live Press Signals</h2>
           <span class="powered-badge" id="signal-count-badge">0 Signals</span>
         </div>
         <div class="signal-list" id="intelligence-list">
-          <!-- Populated by JavaScript -->
           <div class="signal-item">
             <div class="signal-time">
               <span class="signal-dot dot-cached"></span>
               WAITING...
             </div>
-            <div class="one-line-summary">Enter your API keys and click "Run Intelligent Search" to discover competitors and fetch live intelligence.</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Competitor Watch Grid (dynamically populated) -->
-      <section class="card competitor-section">
-        <div class="card-header">
-          <h2 class="card-title">Discovered Competitors</h2>
-          <span class="powered-badge" id="competitor-count-badge">0 Found</span>
-        </div>
-        <div class="competitor-watch-grid" id="competitor-grid">
-          <!-- Dynamically populated by JavaScript -->
-          <div class="comp-card comp-card-empty">
-            <div class="comp-info">
-              <div class="comp-logo" style="background: rgba(59, 130, 246, 0.2);">?</div>
-              <div class="comp-meta">
-                <h3>No Competitors Yet</h3>
-                <p>Run a search to discover competitors</p>
-              </div>
-            </div>
+            <div class="one-line-summary">Enter your API keys and click "Run Intelligent Search" to discover competitors and fetch live press intelligence.</div>
           </div>
         </div>
       </section>
@@ -116,7 +115,7 @@ Return ONLY the JSON array, no markdown, no explanation.</textarea>
       <section class="card api-config">
         <div class="config-header">
           <h2 class="card-title" style="margin-bottom: 0.25rem;">Live Connector</h2>
-          <p style="font-size: 0.7rem; color: var(--text-secondary);">Enter your API keys to enable live intelligence</p>
+          <p style="font-size: 0.7rem; color: var(--text-secondary);">Enter your own API keys to run searches</p>
         </div>
         <div class="api-inputs">
           <div class="api-field">
@@ -135,7 +134,7 @@ Return ONLY the JSON array, no markdown, no explanation.</textarea>
           </div>
         </div>
         <div class="config-note">
-          <p>Keys are stored securely in your browser's local storage and are never sent to our servers.</p>
+          <p>Keys are stored in your browser's local storage only.</p>
         </div>
       </section>
     </div>
