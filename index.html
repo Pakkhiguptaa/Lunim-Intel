@@ -35,7 +35,7 @@
     <header>
       <div class="header-title">
         <h1>Competitor Intelligence</h1>
-        <p>Live signals from Runway, Stage32, IDEO, and Coursera. Powered by Lunim Intelligence Engine.</p>
+        <p>AI-powered live competitor discovery across Film, UX, AI Studio & Education. Powered by Lunim Intelligence Engine.</p>
       </div>
       <div class="header-actions">
         <span id="last-updated" style="font-size: 0.75rem; color: var(--text-secondary); margin-right: 1rem;">LAST UPDATED: —</span>
@@ -47,102 +47,70 @@
     </header>
 
     <div class="dashboard-grid">
+
+      <!-- Intelligence Prompt -->
+      <section class="card prompt-section">
+        <div class="card-header">
+          <h2 class="card-title">Intelligence Prompt</h2>
+          <span class="powered-badge">Editable</span>
+        </div>
+        <p class="prompt-description">This prompt is sent to the LLM to discover competitors. Edit it freely to target different industries, geographies, or company types.</p>
+        <textarea id="intelligence-prompt" class="prompt-textarea" spellcheck="false">Identify the top 20 competitors for Lunim — a creative technology company — across these four spaces:
+
+1. Film Community & Entertainment Networking (e.g. Stage32, Coverfly, The Black List)
+2. UX Consulting & Design Thinking (e.g. IDEO, Frog Design, Fjord/Accenture Song)
+3. AI Studio & Video Generation (e.g. Runway, Pika, Synthesia, HeyGen)
+4. AI Education & Online Learning (e.g. Coursera, Udemy, Skillshare, MasterClass)
+
+For each competitor return a JSON array of objects with:
+- "name": company name
+- "space": which of the 4 spaces they belong to
+- "query": a Tavily web-search query to find their latest 2026 news, funding, product launches, or partnerships
+
+Return ONLY the JSON array, no markdown, no explanation.</textarea>
+        <div class="prompt-footer">
+          <span class="prompt-hint">💡 Tip: Change industries, competitor count, or add your own companies above</span>
+          <button class="btn-secondary" id="reset-prompt" title="Reset to default prompt">↻ Reset</button>
+        </div>
+      </section>
+
       <!-- Intelligence Feed -->
       <section class="card signal-feed">
         <div class="card-header">
           <h2 class="card-title">Live Press Signals</h2>
-          <span class="powered-badge">Lunim Engine</span>
+          <span class="powered-badge" id="signal-count-badge">0 Signals</span>
         </div>
         <div class="signal-list" id="intelligence-list">
           <!-- Populated by JavaScript -->
           <div class="signal-item">
             <div class="signal-time">
               <span class="signal-dot dot-cached"></span>
-              CACHED...
+              WAITING...
             </div>
-            <div class="one-line-summary">Enter your API keys below and click "Run Intelligent Search" to fetch live intelligence.</div>
+            <div class="one-line-summary">Enter your API keys and click "Run Intelligent Search" to discover competitors and fetch live intelligence.</div>
           </div>
         </div>
       </section>
 
-      <!-- Competitor Watch Grid -->
-      <div class="competitor-watch-grid">
-        <!-- Runway -->
-        <div class="comp-card">
-          <div class="comp-info">
-            <div class="comp-logo" style="background: #e11d48;">R</div>
-            <div class="comp-meta">
-              <h3>Runway</h3>
-              <p>Generative AI Video</p>
+      <!-- Competitor Watch Grid (dynamically populated) -->
+      <section class="card competitor-section">
+        <div class="card-header">
+          <h2 class="card-title">Discovered Competitors</h2>
+          <span class="powered-badge" id="competitor-count-badge">0 Found</span>
+        </div>
+        <div class="competitor-watch-grid" id="competitor-grid">
+          <!-- Dynamically populated by JavaScript -->
+          <div class="comp-card comp-card-empty">
+            <div class="comp-info">
+              <div class="comp-logo" style="background: rgba(59, 130, 246, 0.2);">?</div>
+              <div class="comp-meta">
+                <h3>No Competitors Yet</h3>
+                <p>Run a search to discover competitors</p>
+              </div>
             </div>
-            <span class="tag tag-high-growth" style="margin-left: auto;">High Growth</span>
-          </div>
-          <p style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem;">
-            Dominating the AI video space with Gen-4.5 and real-time avatars. Recently raised $315M Series E.
-          </p>
-          <div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 0.75rem;">
-            <span>Valuation: $5.3B</span>
-            <span style="color: var(--accent-success);">+95% Trend</span>
           </div>
         </div>
-
-        <!-- Stage32 -->
-        <div class="comp-card">
-          <div class="comp-info">
-            <div class="comp-logo" style="background: #2563eb;">S</div>
-            <div class="comp-meta">
-              <h3>Stage32</h3>
-              <p>Entertainment Network</p>
-            </div>
-            <span class="tag tag-steady" style="margin-left: auto;">Steady</span>
-          </div>
-          <p style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem;">
-            Expanding global footprint with Hollywood training programs in the Caribbean and major film contests.
-          </p>
-          <div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 0.75rem;">
-            <span>Members: 1M+</span>
-            <span style="color: var(--accent-primary);">Active</span>
-          </div>
-        </div>
-
-        <!-- IDEO -->
-        <div class="comp-card">
-          <div class="comp-info">
-            <div class="comp-logo" style="background: #10b981;">I</div>
-            <div class="comp-meta">
-              <h3>IDEO</h3>
-              <p>Design Thinking</p>
-            </div>
-            <span class="tag tag-steady" style="margin-left: auto;">Steady</span>
-          </div>
-          <p style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem;">
-            Pivoting to "Sentient Branding" and strategic flexibility to handle AI uncertainty in 2026.
-          </p>
-          <div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 0.75rem;">
-            <span>Focus: Future Tech</span>
-            <span style="color: var(--accent-tertiary);">Pivoting</span>
-          </div>
-        </div>
-
-        <!-- Coursera -->
-        <div class="comp-card">
-          <div class="comp-info">
-            <div class="comp-logo" style="background: #7c3aed;">C</div>
-            <div class="comp-meta">
-              <h3>Coursera</h3>
-              <p>Higher Education</p>
-            </div>
-            <span class="tag tag-trending" style="margin-left: auto;">Trending</span>
-          </div>
-          <p style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem;">
-            Massive expansion via Udemy acquisition and core GPT integrations. Revenue at record $757M.
-          </p>
-          <div style="margin-top: auto; display: flex; justify-content: space-between; font-size: 0.75rem;">
-            <span>Revenue: $757M</span>
-            <span style="color: var(--accent-success);">Rising</span>
-          </div>
-        </div>
-      </div>
+      </section>
 
       <!-- Config Section -->
       <section class="card api-config">
