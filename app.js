@@ -1,7 +1,8 @@
 // ─── Lunim Intel - Competitor Intelligence Dashboard ───
 // Powered by Tavily Search + GitHub Models (GPT-4o) Summarization
+// Keys stored in localStorage, protected by password on UI
 
-// Keys are now stored in and loaded from localStorage to avoid hardcoding on GitHub.
+const KEYS_PASSWORD = 'Coffee';
 
 const DEFAULT_PROMPT = `You are a competitive intelligence analyst for Lunim — a creative technology company.
 
@@ -18,41 +19,26 @@ For each competitor return a JSON array of objects with:
 
 Return ONLY the JSON array, no markdown, no explanation.`;
 
-// Space color palette
-const SPACE_COLORS = {
-  'film': '#e11d48',
-  'ux': '#10b981',
-  'ai video': '#7c3aed',
-  'ai education': '#2563eb',
-};
-
+// ─── Space colors ───
 function getSpaceColor(space) {
   if (!space) return '#6366f1';
   const s = space.toLowerCase();
-  if (s.includes('film') || s.includes('entertainment')) return SPACE_COLORS['film'];
-  if (s.includes('ux') || s.includes('design')) return SPACE_COLORS['ux'];
-  if (s.includes('video') || s.includes('studio') || s.includes('generat')) return SPACE_COLORS['ai video'];
-  if (s.includes('education') || s.includes('learning')) return SPACE_COLORS['ai education'];
+  if (s.includes('film') || s.includes('entertainment')) return '#e11d48';
+  if (s.includes('ux') || s.includes('design')) return '#10b981';
+  if (s.includes('video') || s.includes('studio') || s.includes('generat')) return '#7c3aed';
+  if (s.includes('education') || s.includes('learning')) return '#2563eb';
   return '#6366f1';
 }
 
-// Trend tag classes
-const TREND_CLASSES = {
-  'trending': 'tag-trending',
-  'high growth': 'tag-high-growth',
-  'growing': 'tag-trending',
-  'steady': 'tag-steady',
-  'stagnant': 'tag-stagnant',
-  'declining': 'tag-declining',
-  'emerging': 'tag-emerging',
-};
-
+// ─── Trend classes ───
 function getTrendClass(trend) {
   if (!trend) return 'tag-steady';
   const t = trend.toLowerCase();
-  for (const [key, cls] of Object.entries(TREND_CLASSES)) {
-    if (t.includes(key)) return cls;
-  }
+  if (t.includes('trending')) return 'tag-trending';
+  if (t.includes('high growth') || t.includes('growing')) return 'tag-high-growth';
+  if (t.includes('stagnant')) return 'tag-stagnant';
+  if (t.includes('declining') || t.includes('decline')) return 'tag-declining';
+  if (t.includes('emerging')) return 'tag-emerging';
   return 'tag-steady';
 }
 
@@ -69,6 +55,32 @@ const signalCountBadge = document.getElementById('signal-count-badge');
 const competitorCountBadge = document.getElementById('competitor-count-badge');
 const resetPromptBtn = document.getElementById('reset-prompt');
 
+// Password elements
+const keysLockScreen = document.getElementById('keys-lock-screen');
+const keysUnlocked = document.getElementById('keys-unlocked');
+const keysPasswordInput = document.getElementById('keys-password');
+const keysUnlockBtn = document.getElementById('keys-unlock-btn');
+const keysLockHint = document.getElementById('keys-lock-hint');
+
+// ─── Password Protection for API Keys ───
+keysUnlockBtn.addEventListener('click', attemptUnlock);
+keysPasswordInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') attemptUnlock();
+});
+
+function attemptUnlock() {
+  const entered = keysPasswordInput.value.trim();
+  if (entered === KEYS_PASSWORD) {
+    keysLockScreen.style.display = 'none';
+    keysUnlocked.style.display = 'block';
+    keysLockHint.textContent = '';
+  } else {
+    keysLockHint.textContent = '✕ Wrong password';
+    keysPasswordInput.value = '';
+    keysPasswordInput.focus();
+  }
+}
+
 // ─── Pre-fill API keys from LocalStorage ───
 if (tavilyInput) tavilyInput.value = localStorage.getItem('tavily-key') || '';
 if (githubInput) githubInput.value = localStorage.getItem('github-key') || '';
@@ -79,14 +91,12 @@ if (promptTextarea) {
   if (savedPrompt) promptTextarea.value = savedPrompt;
 }
 
-// Save prompt changes to LocalStorage
 if (promptTextarea) {
   promptTextarea.addEventListener('input', () => {
     localStorage.setItem('intelligence-prompt', promptTextarea.value);
   });
 }
 
-// Reset prompt button
 if (resetPromptBtn) {
   resetPromptBtn.addEventListener('click', () => {
     promptTextarea.value = DEFAULT_PROMPT;
@@ -100,21 +110,20 @@ function renderSignals(data) {
   data.forEach((signal, index) => {
     const item = document.createElement('div');
     item.className = 'signal-item';
-    item.style.animationDelay = `${index * 0.05}s`;
-    item.style.opacity = '0';
+    item.style.animationDelay = `${index * 0.04}s`;
 
     const isLive = signal.time === 'Live Now';
     const isError = signal.time === 'Error';
 
-    // Build source links HTML
     let sourcesHtml = '';
     if (signal.sources && signal.sources.length > 0) {
-      const links = signal.sources.slice(0, 3).map((src, i) => {
-        const domain = new URL(src.url).hostname.replace('www.', '');
-        const title = src.title ? src.title.substring(0, 40) : domain;
-        return `<a href="${src.url}" target="_blank" rel="noopener" class="source-link" title="${src.title || src.url}">${title}${src.title && src.title.length > 40 ? '…' : ''}</a>`;
-      }).join('');
-      sourcesHtml = `<div class="signal-sources">${links}</div>`;
+      const links = signal.sources.slice(0, 3).map(src => {
+        try {
+          const domain = new URL(src.url).hostname.replace('www.', '');
+          return `<a href="${src.url}" target="_blank" rel="noopener" class="source-link" title="${src.title || ''}">${domain}</a>`;
+        } catch { return ''; }
+      }).filter(Boolean).join('');
+      if (links) sourcesHtml = `<div class="signal-sources">${links}</div>`;
     }
 
     item.innerHTML = `
@@ -133,7 +142,7 @@ function renderSignals(data) {
   }
 }
 
-// ─── Render Competitor Cards (rich version with trend, summary, sources) ───
+// ─── Render Competitor Cards (logo + trend) ───
 function renderCompetitorCards(competitors) {
   competitorGrid.innerHTML = '';
   competitors.forEach((comp, index) => {
@@ -143,35 +152,15 @@ function renderCompetitorCards(competitors) {
 
     const card = document.createElement('div');
     card.className = 'comp-card';
-    card.style.animation = `fadeIn 0.4s ease forwards ${index * 0.04}s`;
-
-    // Short space label
-    const spaceLabel = comp.space || 'Unknown';
-
-    // Build summary
-    const summary = comp.summary || '';
-
-    // Build source links
-    let sourcesHtml = '';
-    if (comp.sources && comp.sources.length > 0) {
-      const links = comp.sources.slice(0, 2).map(src => {
-        const domain = new URL(src.url).hostname.replace('www.', '');
-        return `<a href="${src.url}" target="_blank" rel="noopener" class="source-chip" title="${src.title || src.url}">🔗 ${domain}</a>`;
-      }).join('');
-      sourcesHtml = `<div class="comp-sources">${links}</div>`;
-    }
+    card.style.animationDelay = `${index * 0.03}s`;
 
     card.innerHTML = `
-      <div class="comp-info">
-        <div class="comp-logo" style="background: ${color};">${comp.name.charAt(0)}</div>
-        <div class="comp-meta">
-          <h3>${comp.name}</h3>
-          <p>${spaceLabel}</p>
-        </div>
-        <span class="tag ${trendClass}" style="margin-left: auto;">${trendLabel}</span>
+      <div class="comp-logo" style="background: ${color};">${comp.name.charAt(0)}</div>
+      <span class="comp-name">${comp.name}</span>
+      <span class="comp-space">${comp.space || ''}</span>
+      <div class="comp-trend">
+        <span class="tag ${trendClass}">${trendLabel}</span>
       </div>
-      ${summary ? `<p class="comp-summary">${summary}</p>` : ''}
-      ${sourcesHtml}
     `;
     competitorGrid.appendChild(card);
   });
@@ -181,59 +170,37 @@ function renderCompetitorCards(competitors) {
   }
 }
 
-// ─── Update API Status Indicator ───
+// ─── API Status ───
 function setApiStatus(state, customText) {
   if (!statusDot || !statusText) return;
   statusDot.className = 'status-dot';
   switch (state) {
-    case 'connected':
-      statusDot.classList.add('status-connected');
-      statusText.textContent = customText || 'APIs Connected';
-      break;
-    case 'partial':
-      statusDot.classList.add('status-partial');
-      statusText.textContent = customText || 'Partial (Tavily only)';
-      break;
-    case 'disconnected':
-      statusDot.classList.add('status-disconnected');
-      statusText.textContent = customText || 'No API Keys';
-      break;
-    case 'working':
-      statusDot.classList.add('status-working');
-      statusText.textContent = customText || 'Fetching...';
-      break;
+    case 'connected':    statusDot.classList.add('status-connected'); statusText.textContent = customText || 'APIs Connected'; break;
+    case 'partial':      statusDot.classList.add('status-partial');   statusText.textContent = customText || 'Partial'; break;
+    case 'disconnected': statusDot.classList.add('status-disconnected'); statusText.textContent = customText || 'No API Keys'; break;
+    case 'working':      statusDot.classList.add('status-working');   statusText.textContent = customText || 'Fetching...'; break;
   }
 }
 
 function checkApiStatus() {
   const hasTavily = tavilyInput && tavilyInput.value.trim().length > 0;
   const hasGithub = githubInput && githubInput.value.trim().length > 0;
-  if (hasTavily && hasGithub) {
-    setApiStatus('connected');
-  } else if (hasTavily) {
-    setApiStatus('partial');
-  } else {
-    setApiStatus('disconnected');
-  }
+  if (hasTavily && hasGithub) setApiStatus('connected');
+  else if (hasTavily) setApiStatus('partial');
+  else setApiStatus('disconnected');
 }
 
-// ─── LLM Call (GitHub Models GPT-4o) ───
+// ─── LLM Call ───
 async function callLLM(systemPrompt, userPrompt, maxTokens = 2000) {
   const token = githubInput ? githubInput.value.trim() : '';
-  if (!token) throw new Error('LLM API Key (GitHub Token) is required.');
+  if (!token) throw new Error('LLM API Key is required. Unlock the keys section and enter your GitHub token.');
 
   const response = await fetch('https://models.inference.ai.azure.com/chat/completions', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
     body: JSON.stringify({
       model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
+      messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
       max_tokens: maxTokens,
       temperature: 0.3
     })
@@ -241,7 +208,7 @@ async function callLLM(systemPrompt, userPrompt, maxTokens = 2000) {
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new Error(`LLM API Error (${response.status}): ${errorBody}`);
+    throw new Error(`LLM Error (${response.status}): ${errorBody}`);
   }
 
   const data = await response.json();
@@ -251,80 +218,50 @@ async function callLLM(systemPrompt, userPrompt, maxTokens = 2000) {
 // ─── Tavily Search ───
 async function fetchTavilySearch(query) {
   const apiKey = tavilyInput.value.trim();
-  if (!apiKey) throw new Error('Tavily API key is missing');
+  if (!apiKey) throw new Error('Tavily API key is missing. Unlock the keys section.');
 
   const response = await fetch('https://api.tavily.com/search', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      api_key: apiKey,
-      query: query,
-      search_depth: 'advanced',
-      include_answer: true,
-      max_results: 5
-    })
+    body: JSON.stringify({ api_key: apiKey, query: query, search_depth: 'advanced', include_answer: true, max_results: 5 })
   });
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new Error(`Tavily API Error (${response.status}): ${errorBody}`);
+    throw new Error(`Tavily Error (${response.status}): ${errorBody}`);
   }
   return await response.json();
 }
 
-// ─── Analyze competitor: LLM reads Tavily results and returns structured analysis ───
-async function analyzeCompetitor(rawContent, companyName, sources) {
-  const token = githubInput ? githubInput.value.trim() : '';
-  if (!token) {
-    return {
-      summary: rawContent.substring(0, 200),
-      trend: 'Unknown'
-    };
-  }
-
+// ─── Analyze competitor ───
+async function analyzeCompetitor(rawContent, companyName) {
   try {
     const result = await callLLM(
-      `You are a competitive intelligence analyst writing for a strategy team. You MUST respond with ONLY valid JSON, no markdown fences. Analyze the press coverage and return a JSON object with:
-- "summary": A concise 1-2 sentence actionable summary (max 50 words) of what the press is saying — include specific product names, funding rounds, revenue numbers, partnerships, or launches. Be specific, not generic.
-- "trend": One of exactly these labels based on what the press signals indicate: "Trending" (strong positive momentum, new launches, big funding), "High Growth" (rapid expansion, major deals), "Steady" (stable, incremental progress), "Emerging" (new entrant, early stage), "Stagnant" (low activity, no major news), "Declining" (layoffs, losses, negative press)
-
+      `You are a competitive intelligence analyst. Respond with ONLY valid JSON, no markdown. Analyze press coverage and return:
+- "summary": concise 1-2 sentence actionable summary (max 50 words) of what the press is saying — include specific product names, funding, revenue, partnerships. Be specific.
+- "trend": exactly one of: "Trending", "High Growth", "Steady", "Emerging", "Stagnant", "Declining"
 Return ONLY the JSON object.`,
-      `Analyze the latest press intelligence for ${companyName}:\n\n${rawContent}`,
+      `Analyze press intelligence for ${companyName}:\n\n${rawContent}`,
       150
     );
-
-    let parsed;
-    try {
-      let cleaned = result.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
-      parsed = JSON.parse(cleaned);
-    } catch {
-      return { summary: result.substring(0, 200), trend: 'Steady' };
-    }
-
-    return {
-      summary: parsed.summary || rawContent.substring(0, 200),
-      trend: parsed.trend || 'Steady'
-    };
-  } catch (err) {
-    console.warn(`Analysis error for ${companyName}:`, err);
-    return { summary: rawContent.substring(0, 200), trend: 'Unknown' };
+    let cleaned = result.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+    return { summary: parsed.summary || rawContent.substring(0, 200), trend: parsed.trend || 'Steady' };
+  } catch {
+    return { summary: rawContent.substring(0, 200), trend: 'Steady' };
   }
 }
 
-// ─── Progress rendering ───
-function showProgress(message, subMessage) {
+// ─── Progress ───
+function showProgress(msg, sub) {
   listElement.innerHTML = `
     <div class="signal-item loading-pulse">
-      <div class="signal-time">
-        <span class="signal-dot dot-working"></span>
-        ${message}
-      </div>
-      <div class="one-line-summary">${subMessage || ''}</div>
-    </div>
-  `;
+      <div class="signal-time"><span class="signal-dot dot-working"></span>${msg}</div>
+      <div class="one-line-summary">${sub || ''}</div>
+    </div>`;
 }
 
-// ─── Main Refresh Handler ───
+// ─── Main Refresh ───
 async function handleRefresh() {
   refreshBtn.classList.add('loading');
   refreshBtn.disabled = true;
@@ -333,130 +270,68 @@ async function handleRefresh() {
   const prompt = promptTextarea ? promptTextarea.value.trim() : DEFAULT_PROMPT;
 
   try {
-    // ═══════════ STEP 1: LLM discovers competitors ═══════════
-    showProgress('STEP 1 / 3 — DISCOVERING COMPETITORS...', 'Sending your prompt to the LLM to identify the top competitors...');
+    // STEP 1: Discover competitors
+    showProgress('STEP 1 — DISCOVERING COMPETITORS...', 'Sending prompt to LLM...');
 
     const llmResponse = await callLLM(
-      'You are a market research analyst. You MUST respond with ONLY a valid JSON array. No markdown fences, no explanations. Each object must have "name", "space", and "query" keys.',
-      prompt,
-      3000
+      'You are a market research analyst. Respond with ONLY a valid JSON array. No markdown. Each object: "name", "space", "query".',
+      prompt, 3000
     );
 
-    // Parse JSON
     let competitors;
     try {
       let cleaned = llmResponse.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
       competitors = JSON.parse(cleaned);
-    } catch (parseErr) {
-      throw new Error(`Failed to parse LLM competitor list. Raw: ${llmResponse.substring(0, 300)}`);
-    }
+    } catch { throw new Error('Failed to parse LLM response. Check your prompt.'); }
 
-    if (!Array.isArray(competitors) || competitors.length === 0) {
-      throw new Error('LLM returned an empty or invalid competitor list.');
-    }
+    if (!Array.isArray(competitors) || !competitors.length) throw new Error('No competitors found.');
 
-    // Show initial competitor cards (pending state)
-    renderCompetitorCards(competitors.map(c => ({ ...c, trend: 'Pending', summary: '' })));
+    renderCompetitorCards(competitors.map(c => ({ ...c, trend: 'Pending' })));
 
-    // ═══════════ STEP 2: Tavily search each competitor ═══════════
-    showProgress(
-      `STEP 2 / 3 — SEARCHING PRESS FOR ${competitors.length} COMPETITORS...`,
-      'Querying Tavily for live press coverage on each competitor...'
-    );
-
+    // STEP 2 & 3: Search + Analyze
     const enrichedCompetitors = [];
     const liveSignals = [];
 
     for (let i = 0; i < competitors.length; i++) {
       const company = competitors[i];
-      setApiStatus('working', `Searching ${i + 1}/${competitors.length}: ${company.name}`);
+      setApiStatus('working', `${i + 1}/${competitors.length}: ${company.name}`);
+      showProgress(`SEARCHING ${i + 1}/${competitors.length}...`, `Fetching press for ${company.name}...`);
 
       try {
         const searchResults = await fetchTavilySearch(company.query);
-
-        // Collect raw content
         let rawContent = searchResults.answer || '';
         const sources = [];
 
         if (searchResults.results && searchResults.results.length > 0) {
-          searchResults.results.slice(0, 5).forEach(r => {
-            sources.push({ url: r.url, title: r.title || '' });
-          });
-          const snippets = searchResults.results
-            .slice(0, 4)
-            .map(r => r.content)
-            .join('\n');
-          rawContent = rawContent ? `${rawContent}\n\nPress snippets:\n${snippets}` : snippets;
+          searchResults.results.slice(0, 5).forEach(r => sources.push({ url: r.url, title: r.title || '' }));
+          const snippets = searchResults.results.slice(0, 4).map(r => r.content).join('\n');
+          rawContent = rawContent ? `${rawContent}\n\n${snippets}` : snippets;
         }
 
         if (!rawContent) rawContent = 'No recent press coverage found.';
 
-        // ═══════════ STEP 3: LLM analyses & summarises ═══════════
-        if (i === 0) {
-          showProgress(
-            `STEP 3 / 3 — ANALYSING PRESS & ASSIGNING TRENDS...`,
-            `LLM is reading press for ${company.name} and ${competitors.length - 1} more...`
-          );
-        }
+        const analysis = await analyzeCompetitor(rawContent, company.name);
 
-        const analysis = await analyzeCompetitor(rawContent, company.name, sources);
+        enrichedCompetitors.push({ ...company, trend: analysis.trend });
+        liveSignals.push({ company: company.name, summary: analysis.summary, time: 'Live Now', sources });
 
-        enrichedCompetitors.push({
-          ...company,
-          summary: analysis.summary,
-          trend: analysis.trend,
-          sources: sources
-        });
-
-        liveSignals.push({
-          company: company.name,
-          summary: analysis.summary,
-          time: 'Live Now',
-          sources: sources
-        });
-
-        // Update cards progressively
-        const pendingRemaining = competitors.slice(i + 1).map(c => ({ ...c, trend: 'Pending', summary: '' }));
-        renderCompetitorCards([...enrichedCompetitors, ...pendingRemaining]);
-
+        // Progressive update
+        const pending = competitors.slice(i + 1).map(c => ({ ...c, trend: 'Pending' }));
+        renderCompetitorCards([...enrichedCompetitors, ...pending]);
       } catch (err) {
-        console.error(`Error for ${company.name}:`, err);
-        enrichedCompetitors.push({
-          ...company,
-          summary: `⚠ ${err.message}`,
-          trend: 'Unknown',
-          sources: []
-        });
-        liveSignals.push({
-          company: company.name,
-          summary: `⚠ ${err.message}`,
-          time: 'Error',
-          sources: []
-        });
+        enrichedCompetitors.push({ ...company, trend: 'Unknown' });
+        liveSignals.push({ company: company.name, summary: `⚠ ${err.message}`, time: 'Error', sources: [] });
       }
     }
 
-    // Final render
     renderCompetitorCards(enrichedCompetitors);
     renderSignals(liveSignals);
-
-    // Update timestamp
-    const lastUpdated = document.getElementById('last-updated');
-    if (lastUpdated) {
-      const now = new Date();
-      lastUpdated.textContent = `LAST UPDATED: ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    }
   } catch (e) {
-    console.error('General Error:', e);
     listElement.innerHTML = `
       <div class="signal-item">
-        <div class="signal-time">
-          <span class="signal-dot dot-error"></span>
-          ERROR
-        </div>
+        <div class="signal-time"><span class="signal-dot dot-error"></span>ERROR</div>
         <div class="one-line-summary">⚠ ${e.message}</div>
-      </div>
-    `;
+      </div>`;
   } finally {
     refreshBtn.classList.remove('loading');
     refreshBtn.disabled = false;
@@ -464,32 +339,16 @@ async function handleRefresh() {
   }
 }
 
-// ─── Initialization ───
+// ─── Init ───
 checkApiStatus();
-
-// ─── Event Listeners ───
 refreshBtn.addEventListener('click', handleRefresh);
 
-if (tavilyInput) {
-  tavilyInput.addEventListener('input', () => {
-    localStorage.setItem('tavily-key', tavilyInput.value.trim());
-    checkApiStatus();
-  });
-}
-if (githubInput) {
-  githubInput.addEventListener('input', () => {
-    localStorage.setItem('github-key', githubInput.value.trim());
-    checkApiStatus();
-  });
-}
+if (tavilyInput) tavilyInput.addEventListener('input', () => { localStorage.setItem('tavily-key', tavilyInput.value.trim()); checkApiStatus(); });
+if (githubInput) githubInput.addEventListener('input', () => { localStorage.setItem('github-key', githubInput.value.trim()); checkApiStatus(); });
 
-// Toggle password visibility
 document.querySelectorAll('.toggle-visibility').forEach(btn => {
   btn.addEventListener('click', () => {
     const input = btn.parentElement.querySelector('input');
-    if (input) {
-      input.type = input.type === 'password' ? 'text' : 'password';
-      btn.textContent = input.type === 'password' ? '👁' : '🔒';
-    }
+    if (input) { input.type = input.type === 'password' ? 'text' : 'password'; btn.textContent = input.type === 'password' ? '👁' : '🔒'; }
   });
 });

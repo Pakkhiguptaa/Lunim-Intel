@@ -11,17 +11,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
+
+  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="logo">
       <img src="lunim-logo.webp" alt="Lunim Logo" style="height: 32px; width: auto; margin-right: 12px;">
       <span>Lunim Intel</span>
     </div>
 
-    <!-- UI Prompt Section strictly managed in sidebar -->
-    <div class="sidebar-prompt" id="prompt-section">
+    <!-- Live Prompt Editor (replaces the old nav) -->
+    <div class="sidebar-prompt">
       <div class="sidebar-prompt-header">
-        <span class="prompt-title">⚡ Live Prompt Engine</span>
-        <button id="reset-prompt" class="prompt-reset-btn" title="Reset Default Prompt">↻ Reset</button>
+        <span class="prompt-label">⚡ Intelligence Prompt</span>
+        <button id="reset-prompt" class="prompt-reset-btn" title="Reset to default">↻</button>
       </div>
       <textarea id="intelligence-prompt" class="sidebar-prompt-textarea" spellcheck="false">You are a competitive intelligence analyst for Lunim — a creative technology company.
 
@@ -37,10 +39,39 @@ For each competitor return a JSON array of objects with:
 - "query": a Tavily web-search query to find their latest 2026 news, funding, product launches, or partnerships
 
 Return ONLY the JSON array, no markdown, no explanation.</textarea>
-      <p class="sidebar-prompt-hint">💡 Type above to discover different competitors</p>
+      <span class="sidebar-prompt-hint">💡 Edit above to target different industries or competitors</span>
     </div>
 
-    <!-- API Status in sidebar -->
+    <!-- Password-protected API Keys -->
+    <div class="sidebar-keys">
+      <div id="keys-lock-screen">
+        <span class="keys-lock-label">🔐 API Keys Locked</span>
+        <div class="keys-password-row">
+          <input type="password" id="keys-password" class="keys-password-input" placeholder="Enter password..." autocomplete="off">
+          <button id="keys-unlock-btn" class="keys-unlock-btn">Unlock</button>
+        </div>
+        <span class="keys-lock-hint" id="keys-lock-hint"></span>
+      </div>
+      <div id="keys-unlocked" style="display: none;">
+        <div class="keys-field">
+          <label class="keys-label">🔍 Tavily API Key</label>
+          <div class="keys-input-row">
+            <input type="password" id="tavily-key" placeholder="tvly-..." autocomplete="off">
+            <button class="toggle-visibility" type="button">👁</button>
+          </div>
+        </div>
+        <div class="keys-field">
+          <label class="keys-label">🤖 LLM API Key (GitHub Token)</label>
+          <div class="keys-input-row">
+            <input type="password" id="github-key" placeholder="github_pat_..." autocomplete="off">
+            <button class="toggle-visibility" type="button">👁</button>
+          </div>
+        </div>
+        <span class="keys-note">Keys stored in browser only</span>
+      </div>
+    </div>
+
+    <!-- Status -->
     <div class="sidebar-status">
       <div class="status-indicator">
         <span class="status-dot status-disconnected" id="api-status-dot"></span>
@@ -49,14 +80,13 @@ Return ONLY the JSON array, no markdown, no explanation.</textarea>
     </div>
   </aside>
 
+  <!-- Main Content -->
   <main class="main-content">
     <header>
       <div class="header-title">
         <h1>Competitor Intelligence</h1>
-        <p>AI-powered live competitor discovery &amp; press analysis across Film, UX, AI Studio &amp; Education.</p>
       </div>
       <div class="header-actions">
-        <span id="last-updated" style="font-size: 0.75rem; color: var(--text-secondary); margin-right: 1rem;">LAST UPDATED: —</span>
         <button class="btn-primary" id="refresh-action">
           <svg style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path></svg>
           Run Intelligent Search
@@ -64,68 +94,35 @@ Return ONLY the JSON array, no markdown, no explanation.</textarea>
       </div>
     </header>
 
-    <div class="dashboard-grid">
-
-      <!-- Left Side: Live Press Signals (Summaries & Links) -->
-      <section class="card signal-feed" id="signal-feed-section">
-        <div class="card-header">
-          <h2 class="card-title">Live Press Signals</h2>
-          <span class="powered-badge" id="signal-count-badge">0 Signals</span>
+    <div class="split-panels">
+      <!-- LEFT: Press Summaries & Source Links -->
+      <section class="panel panel-left">
+        <div class="panel-header">
+          <h2 class="panel-title">Live Press Signals</h2>
+          <span class="panel-badge" id="signal-count-badge">0 Signals</span>
         </div>
         <div class="signal-list" id="intelligence-list">
-          <div class="signal-item">
+          <div class="signal-item signal-empty">
             <div class="signal-time">
               <span class="signal-dot dot-cached"></span>
               WAITING...
             </div>
-            <div class="one-line-summary">Enter your API keys and click "Run Intelligent Search" to discover competitors and fetch live press intelligence.</div>
+            <div class="one-line-summary">Enter your API keys and click "Run Intelligent Search" to discover competitors and fetch live press.</div>
           </div>
         </div>
       </section>
 
-      <!-- Right Side: Competitor Landscape (Logos, Trends) -->
-      <section class="card competitor-section" id="competitor-section">
-        <div class="card-header">
-          <h2 class="card-title">Competitor Landscape</h2>
-          <span class="powered-badge" id="competitor-count-badge">0 Found</span>
+      <!-- RIGHT: Competitor Logos & Trends (Red Glow) -->
+      <section class="panel panel-right panel-red-glow">
+        <div class="panel-header">
+          <h2 class="panel-title">Competitor Landscape</h2>
+          <span class="panel-badge" id="competitor-count-badge">0 Found</span>
         </div>
-        <div class="competitor-watch-grid" id="competitor-grid">
+        <div class="competitor-grid" id="competitor-grid">
           <div class="comp-card comp-card-empty">
-            <div class="comp-info">
-              <div class="comp-logo" style="background: rgba(59, 130, 246, 0.2);">?</div>
-              <div class="comp-meta">
-                <h3>Waiting for Search</h3>
-                <p>Run a search to discover 20 competitors</p>
-              </div>
-            </div>
+            <div class="comp-logo" style="background: rgba(255,255,255,0.05);">?</div>
+            <span class="comp-name">Waiting...</span>
           </div>
-        </div>
-      </section>
-
-      <!-- Config Section -->
-      <section class="card api-config">
-        <div class="config-header">
-          <h2 class="card-title" style="margin-bottom: 0.25rem;">Live Connector</h2>
-          <p style="font-size: 0.7rem; color: var(--text-secondary);">Enter your own API keys to run searches</p>
-        </div>
-        <div class="api-inputs">
-          <div class="api-field">
-            <label class="api-label" for="tavily-key">🔍 Tavily API Key</label>
-            <div class="input-wrapper">
-              <input type="password" id="tavily-key" placeholder="tvly-..." autocomplete="off">
-              <button class="toggle-visibility" type="button" title="Toggle visibility">👁</button>
-            </div>
-          </div>
-          <div class="api-field">
-            <label class="api-label" for="github-key">🤖 LLM API Key (GitHub Token)</label>
-            <div class="input-wrapper">
-              <input type="password" id="github-key" placeholder="github_pat_..." autocomplete="off">
-              <button class="toggle-visibility" type="button" title="Toggle visibility">👁</button>
-            </div>
-          </div>
-        </div>
-        <div class="config-note">
-          <p>Keys are stored in your browser's local storage only.</p>
         </div>
       </section>
     </div>
