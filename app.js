@@ -1,8 +1,7 @@
 // ─── Lunim Intel - Competitor Intelligence Dashboard ───
 // Powered by Tavily Search + GitHub Models (GPT-4o) Summarization
 
-const DEFAULT_TAVILY_KEY = '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';
-const DEFAULT_GITHUB_TOKEN = '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';
+// Keys are now stored in and loaded from localStorage to avoid hardcoding on GitHub.
 
 const companies = [
   { query: 'Runway AI latest news funding product launch 2026', name: 'Runway' },
@@ -26,9 +25,9 @@ const githubInput = document.getElementById('github-key');
 const statusDot = document.getElementById('api-status-dot');
 const statusText = document.getElementById('api-status-text');
 
-// ─── Pre-fill API keys ───
-if (tavilyInput) tavilyInput.value = DEFAULT_TAVILY_KEY;
-if (githubInput) githubInput.value = DEFAULT_GITHUB_TOKEN;
+// ─── Pre-fill API keys from LocalStorage ───
+if (tavilyInput) tavilyInput.value = localStorage.getItem('tavily-key') || '';
+if (githubInput) githubInput.value = localStorage.getItem('github-key') || '';
 
 // ─── Render Signals ───
 function renderSignals(data) {
@@ -241,9 +240,19 @@ checkApiStatus();
 // ─── Event Listeners ───
 refreshBtn.addEventListener('click', handleRefresh);
 
-// Update status when keys change
-if (tavilyInput) tavilyInput.addEventListener('input', checkApiStatus);
-if (githubInput) githubInput.addEventListener('input', checkApiStatus);
+// Update status and save to LocalStorage when keys change
+if (tavilyInput) {
+  tavilyInput.addEventListener('input', () => {
+    localStorage.setItem('tavily-key', tavilyInput.value.trim());
+    checkApiStatus();
+  });
+}
+if (githubInput) {
+  githubInput.addEventListener('input', () => {
+    localStorage.setItem('github-key', githubInput.value.trim());
+    checkApiStatus();
+  });
+}
 
 // Toggle password visibility
 document.querySelectorAll('.toggle-visibility').forEach(btn => {
