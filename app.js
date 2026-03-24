@@ -4,17 +4,45 @@
 
 const KEYS_PASSWORD = 'Coffee';
 
-const DEFAULT_PROMPT = `You are a competitive intelligence analyst for Lunim Intel — a creative technology company.
+// ─── HARDCODED COMPANY PROFILE (immutable) ───
+// This context is ALWAYS injected into every intelligence search.
+// It cannot be edited from the UI — it defines who Lunim is.
+const LUNIM_PROFILE = Object.freeze({
+  name: 'Lunim',
+  industry: 'AI and Web3',
+  description: 'Lunim is a tech company operating at the intersection of AI and Web3.',
+  pillars: [
+    { id: 1, name: 'Film Community & Entertainment Networking', shortLabel: 'Film & Entertainment', examples: 'Stage32, Coverfly, The Black List, FilmFreeway, Seed&Spark' },
+    { id: 2, name: 'UX Consulting & Design Thinking', shortLabel: 'UX & Design', examples: 'IDEO, Frog Design, Fjord/Accenture Song, Huge, Pentagram' },
+    { id: 3, name: 'AI Studio & Video Generation', shortLabel: 'AI Video & Studio', examples: 'Runway, Pika, Synthesia, HeyGen, Luma AI, Kling' },
+    { id: 4, name: 'AI Education & Online Learning', shortLabel: 'AI Education', examples: 'Coursera, Udemy, Skillshare, MasterClass, DataCamp' }
+  ]
+});
 
-Identify latest press signals on the top 20 competitors for Lunim Intel across these four spaces:
-1. Film Community & Entertainment Networking (e.g. Stage32, Coverfly, The Black List)
-2. UX Consulting & Design Thinking (e.g. IDEO, Frog Design, Fjord/Accenture Song)
-3. AI Studio & Video Generation (e.g. Runway, Pika, Synthesia, HeyGen)
-4. AI Education & Online Learning (e.g. Coursera, Udemy, Skillshare, MasterClass)
+// This is the immutable system context that always gets injected.
+// The editable prompt in the UI is layered ON TOP of this.
+const LUNIM_CONTEXT_INJECTION = `
+== COMPANY CONTEXT (hardcoded — always active) ==
+Company: ${LUNIM_PROFILE.name}
+Industry: ${LUNIM_PROFILE.industry}
+Description: ${LUNIM_PROFILE.description}
+
+Lunim's Four Pillars of Work:
+${LUNIM_PROFILE.pillars.map(p => `${p.id}. ${p.name} (e.g. ${p.examples})`).join('\n')}
+
+When identifying competitors, you MUST select companies from the ${LUNIM_PROFILE.industry} space
+and related industries that overlap with the four pillars above.
+Use short space labels: ${LUNIM_PROFILE.pillars.map(p => `"${p.shortLabel}"`).join(', ')}
+== END COMPANY CONTEXT ==
+`.trim();
+
+// The DEFAULT_PROMPT is the editable part — departments can customize this.
+// The LUNIM_CONTEXT_INJECTION is always prepended automatically.
+const DEFAULT_PROMPT = `Identify latest press signals on the top 20 competitors for Lunim across its four pillars of work.
 
 For each competitor return a JSON array of objects with:
 - "name": company name
-- "space": which of the 4 spaces they belong to (use short labels: "Film & Entertainment", "UX & Design", "AI Video & Studio", "AI Education")
+- "space": which of the 4 pillars they belong to (use short labels: "Film & Entertainment", "UX & Design", "AI Video & Studio", "AI Education")
 - "query": a Tavily web-search query to find their latest 2026 news, funding, product launches, or partnerships
 
 Return ONLY the JSON array, no markdown, no explanation.`;
@@ -267,15 +295,19 @@ async function handleRefresh() {
   refreshBtn.disabled = true;
   setApiStatus('working', 'Discovering...');
 
-  const prompt = promptTextarea ? promptTextarea.value.trim() : DEFAULT_PROMPT;
+  // The editable prompt (customizable per department)
+  const editablePrompt = promptTextarea ? promptTextarea.value.trim() : DEFAULT_PROMPT;
+
+  // ALWAYS inject hardcoded Lunim context + the editable prompt
+  const fullPrompt = `${LUNIM_CONTEXT_INJECTION}\n\n== DEPARTMENT INSTRUCTIONS ==\n${editablePrompt}`;
 
   try {
     // STEP 1: Discover competitors
     showProgress('STEP 1 — DISCOVERING COMPETITORS...', 'Sending prompt to LLM...');
 
     const llmResponse = await callLLM(
-      'You are a market research analyst. Respond with ONLY a valid JSON array. No markdown. Each object: "name", "space", "query".',
-      prompt, 3000
+      `You are a market research analyst for ${LUNIM_PROFILE.name}, a tech company in the ${LUNIM_PROFILE.industry} space. Respond with ONLY a valid JSON array. No markdown. Each object must have: "name", "space", "query". Focus on competitors relevant to the company's industry and pillars.`,
+      fullPrompt, 3000
     );
 
     let competitors;

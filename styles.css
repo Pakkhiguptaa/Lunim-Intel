@@ -54,6 +54,68 @@ body {
   border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 
+/* ─── Sidebar Company Context Badge (hardcoded, always active) ─── */
+.sidebar-context-badge {
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 12px;
+  padding: 0.75rem 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.context-badge-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.context-badge-icon {
+  font-size: 0.85rem;
+}
+
+.context-badge-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #c7d2fe;
+  letter-spacing: -0.01em;
+  flex-grow: 1;
+}
+
+.context-badge-lock {
+  font-size: 0.65rem;
+  opacity: 0.6;
+  cursor: help;
+}
+
+.context-pillars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.context-pillar {
+  font-size: 0.55rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--pillar-color) 15%, transparent);
+  color: color-mix(in srgb, var(--pillar-color) 70%, white);
+  border: 1px solid color-mix(in srgb, var(--pillar-color) 25%, transparent);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.context-badge-note {
+  font-size: 0.55rem;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  font-style: italic;
+}
+
 /* ─── Sidebar Prompt ─── */
 .sidebar-prompt {
   background: rgba(59, 130, 246, 0.08);

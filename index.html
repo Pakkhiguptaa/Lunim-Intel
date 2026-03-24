@@ -19,27 +19,37 @@
       <span>Intel</span>
     </div>
 
-    <!-- Live Prompt Editor (replaces the old nav) -->
+    <!-- Hardcoded Company Context Indicator -->
+    <div class="sidebar-context-badge" id="company-context-badge">
+      <div class="context-badge-header">
+        <span class="context-badge-icon">🏢</span>
+        <span class="context-badge-title">Lunim — AI &amp; Web3</span>
+        <span class="context-badge-lock" title="Hardcoded context, always active">🔒</span>
+      </div>
+      <div class="context-pillars">
+        <span class="context-pillar" style="--pillar-color: #e11d48;">Film &amp; Entertainment</span>
+        <span class="context-pillar" style="--pillar-color: #10b981;">UX &amp; Design</span>
+        <span class="context-pillar" style="--pillar-color: #7c3aed;">AI Video &amp; Studio</span>
+        <span class="context-pillar" style="--pillar-color: #2563eb;">AI Education</span>
+      </div>
+      <span class="context-badge-note">Always injected into every search</span>
+    </div>
+
+    <!-- Live Prompt Editor (editable per department) -->
     <div class="sidebar-prompt">
       <div class="sidebar-prompt-header">
-        <span class="prompt-label">⚡ Intelligence Prompt</span>
+        <span class="prompt-label">⚡ Department Prompt</span>
         <button id="reset-prompt" class="prompt-reset-btn" title="Reset to default">↻</button>
       </div>
-      <textarea id="intelligence-prompt" class="sidebar-prompt-textarea" spellcheck="false">You are a competitive intelligence analyst for Lunim Intel — a creative technology company.
-
-Identify latest press signals on the top 20 competitors for Lunim Intel across these four spaces:
-1. Film Community & Entertainment Networking (e.g. Stage32, Coverfly, The Black List)
-2. UX Consulting & Design Thinking (e.g. IDEO, Frog Design, Fjord/Accenture Song)
-3. AI Studio & Video Generation (e.g. Runway, Pika, Synthesia, HeyGen)
-4. AI Education & Online Learning (e.g. Coursera, Udemy, Skillshare, MasterClass)
+      <textarea id="intelligence-prompt" class="sidebar-prompt-textarea" spellcheck="false">Identify latest press signals on the top 20 competitors for Lunim across its four pillars of work.
 
 For each competitor return a JSON array of objects with:
 - "name": company name
-- "space": which of the 4 spaces they belong to (use short labels: "Film & Entertainment", "UX & Design", "AI Video & Studio", "AI Education")
+- "space": which of the 4 pillars they belong to (use short labels: "Film &amp; Entertainment", "UX &amp; Design", "AI Video &amp; Studio", "AI Education")
 - "query": a Tavily web-search query to find their latest 2026 news, funding, product launches, or partnerships
 
 Return ONLY the JSON array, no markdown, no explanation.</textarea>
-      <span class="sidebar-prompt-hint">💡 Edit above to target different industries or competitors</span>
+      <span class="sidebar-prompt-hint">💡 Edit above to customize for your department — company context is always included</span>
     </div>
 
     <!-- Password-protected API Keys -->
