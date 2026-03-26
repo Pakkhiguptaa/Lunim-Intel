@@ -19,38 +19,38 @@
       <span>Intel</span>
     </div>
 
-    <!-- Hardcoded Company Context Indicator -->
-    <div class="sidebar-context-badge" id="company-context-badge">
-      <div class="context-badge-header">
-        <span class="context-badge-icon">🏢</span>
-        <span class="context-badge-title">Lunim — AI &amp; Web3</span>
-        <span class="context-badge-lock" title="Hardcoded context, always active">🔒</span>
-      </div>
-      <div class="context-pillars">
-        <span class="context-pillar" style="--pillar-color: #e11d48;">Film &amp; Entertainment</span>
-        <span class="context-pillar" style="--pillar-color: #10b981;">UX &amp; Design</span>
-        <span class="context-pillar" style="--pillar-color: #7c3aed;">AI Video &amp; Studio</span>
-        <span class="context-pillar" style="--pillar-color: #2563eb;">AI Education</span>
-      </div>
-      <span class="context-badge-note">Always injected into every search</span>
-    </div>
-
-    <!-- Live Prompt Editor (editable per department) -->
+    <!-- Intelligence Prompt -->
     <div class="sidebar-prompt">
       <div class="sidebar-prompt-header">
-        <span class="prompt-label">⚡ Department Prompt</span>
+        <span class="prompt-label">⚡ Intelligence Prompt</span>
         <button id="reset-prompt" class="prompt-reset-btn" title="Reset to default">↻</button>
       </div>
-      <textarea id="intelligence-prompt" class="sidebar-prompt-textarea" spellcheck="false">Identify latest press signals on the top 20 competitors for Lunim across its four pillars of work.
-
-For each competitor return a JSON array of objects with:
-- "name": company name
-- "space": which of the 4 pillars they belong to (use short labels: "Film &amp; Entertainment", "UX &amp; Design", "AI Video &amp; Studio", "AI Education")
-- "query": a Tavily web-search query to find their latest 2026 news, funding, product launches, or partnerships
-
-Return ONLY the JSON array, no markdown, no explanation.</textarea>
-      <span class="sidebar-prompt-hint">💡 Edit above to customize for your department — company context is always included</span>
+      <textarea id="intelligence-prompt" class="sidebar-prompt-textarea" spellcheck="false" placeholder="What would you like to know about our competitors?">Give me a general overview of what our competitors are doing — cover all areas including deals, product updates, partnerships, and market moves.</textarea>
+      <div class="sidebar-prompt-examples">
+        <span class="examples-label">💡 Try focusing on specific areas:</span>
+        <ul class="examples-list">
+          <li><strong>Funding:</strong> What funding rounds, acquisitions, or business deals have our competitors closed recently?</li>
+          <li><strong>Products:</strong> What new features, tools, or platform updates have competitors launched?</li>
+          <li><strong>Campaigns:</strong> What marketing campaigns or brand moves have competitors made that gained traction?</li>
+          <li><strong>Partnerships:</strong> What strategic partnerships or integrations have been announced?</li>
+          <li><strong>Customer Intel:</strong> What are customers saying about competitor products — any common requests or complaints?</li>
+        </ul>
+      </div>
     </div>
+
+    <!-- Competitor Count -->
+    <div class="sidebar-competitor-count">
+      <div class="count-header">
+        <span class="count-label">🎯 Competitors to Track</span>
+        <span class="count-value" id="competitor-count-value">20</span>
+      </div>
+      <input type="range" id="competitor-count-slider" class="count-slider" min="5" max="30" step="1" value="20">
+      <div class="count-range-labels">
+        <span>5</span>
+        <span>30</span>
+      </div>
+    </div>
+
 
     <!-- Password-protected API Keys -->
     <div class="sidebar-keys">

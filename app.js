@@ -1,61 +1,84 @@
 // ─── Lunim Intel - Competitor Intelligence Dashboard ───
 // Powered by Tavily Search + GitHub Models (GPT-4o) Summarization
-// Keys stored in localStorage, protected by password on UI
+// Fully prompt-driven: the intelligence prompt controls everything.
 
 const KEYS_PASSWORD = 'Coffee';
 
-// ─── HARDCODED COMPANY PROFILE (immutable) ───
-// This context is ALWAYS injected into every intelligence search.
-// It cannot be edited from the UI — it defines who Lunim is.
-const LUNIM_PROFILE = Object.freeze({
-  name: 'Lunim',
-  industry: 'AI and Web3',
-  description: 'Lunim is a tech company operating at the intersection of AI and Web3.',
-  pillars: [
-    { id: 1, name: 'Film Community & Entertainment Networking', shortLabel: 'Film & Entertainment', examples: 'Stage32, Coverfly, The Black List, FilmFreeway, Seed&Spark' },
-    { id: 2, name: 'UX Consulting & Design Thinking', shortLabel: 'UX & Design', examples: 'IDEO, Frog Design, Fjord/Accenture Song, Huge, Pentagram' },
-    { id: 3, name: 'AI Studio & Video Generation', shortLabel: 'AI Video & Studio', examples: 'Runway, Pika, Synthesia, HeyGen, Luma AI, Kling' },
-    { id: 4, name: 'AI Education & Online Learning', shortLabel: 'AI Education', examples: 'Coursera, Udemy, Skillshare, MasterClass, DataCamp' }
-  ]
-});
+// ─── HARDCODED LUNIM COMPANY CONTEXT (hidden from UI, always injected) ───
+const LUNIM_COMPANY_CONTEXT = `Lunim is a tech company at the intersection of AI and Web3.
 
-// This is the immutable system context that always gets injected.
-// The editable prompt in the UI is layered ON TOP of this.
-const LUNIM_CONTEXT_INJECTION = `
-== COMPANY CONTEXT (hardcoded — always active) ==
-Company: ${LUNIM_PROFILE.name}
-Industry: ${LUNIM_PROFILE.industry}
-Description: ${LUNIM_PROFILE.description}
+Lunim operates across four core pillars, with reference competitors in each:
 
-Lunim's Four Pillars of Work:
-${LUNIM_PROFILE.pillars.map(p => `${p.id}. ${p.name} (e.g. ${p.examples})`).join('\n')}
+1. Film Community & Entertainment Networking
+   Reference competitors: Film3, Decentralized Pictures, MovieLabs, Tribeca Studios, Stage 32
 
-When identifying competitors, you MUST select companies from the ${LUNIM_PROFILE.industry} space
-and related industries that overlap with the four pillars above.
-Use short space labels: ${LUNIM_PROFILE.pillars.map(p => `"${p.shortLabel}"`).join(', ')}
-== END COMPANY CONTEXT ==
-`.trim();
+2. UX Consulting & Design Thinking
+   Reference competitors: IDEO (AI Lab), Framer, Galileo AI, Uizard, Diagram (acquired by Figma)
 
-// The DEFAULT_PROMPT is the editable part — departments can customize this.
-// The LUNIM_CONTEXT_INJECTION is always prepended automatically.
-const DEFAULT_PROMPT = `Identify latest press signals on the top 20 competitors for Lunim across its four pillars of work.
+3. AI Studio & Video Generation
+   Reference competitors: Runway, Pika, Sora (OpenAI), Luma AI, Kling (Kuaishou), Synthesia
 
-For each competitor return a JSON array of objects with:
-- "name": company name
-- "space": which of the 4 pillars they belong to (use short labels: "Film & Entertainment", "UX & Design", "AI Video & Studio", "AI Education")
-- "query": a Tavily web-search query to find their latest 2026 news, funding, product launches, or partnerships
+4. AI Education & Online Learning
+   Reference competitors: Section (formerly Section4), Synthesis AI, Maven, Coursera (AI tracks), DataCamp
 
-Return ONLY the JSON array, no markdown, no explanation.`;
+The top competitors for Lunim span these four fields. Use the reference competitors as anchors to discover similar companies in each space — include both the named references and any other emerging or established competitors.`;
 
-// ─── Space colors ───
+// ─── HARDCODED INTELLIGENCE CATEGORIES (always injected, not visible in UI) ───
+const INTELLIGENCE_CATEGORIES = `The following intelligence categories are MANDATORY parameters. Every search must gather information across ALL of these categories:
+
+1. FUNDING & DEALS — funding rounds, M&A activity, investments, acquisitions, business deals, revenue milestones
+2. PRODUCT LAUNCHES — new products, feature releases, platform updates, technical innovations, product pivots
+3. PARTNERSHIPS & ALLIANCES — strategic partnerships, collaborations, joint ventures, integrations, ecosystem plays
+4. MARKETING CAMPAIGNS — notable marketing campaigns, brand strategies, viral content, go-to-market moves, rebranding
+5. MARKET SIGNALS — expansion news, hiring surges, layoffs, leadership changes, regulatory moves, market entry/exit
+6. CUSTOMER SENTIMENT — customer feedback, feature requests, pain points, reviews, community discussions, churn signals
+
+These categories are the baseline. The user's prompt below may emphasize or narrow the focus to specific categories, but all categories should still be considered when crafting search queries.`;
+
+// ─── DEFAULT INTELLIGENCE PROMPT (editable by the user — focuses output within the hardcoded categories) ───
+const DEFAULT_PROMPT = `Give me a general overview of what our competitors are doing — cover all areas including deals, product updates, partnerships, and market moves.`;
+
+// ─── DEFAULT SYSTEM PROMPT (hardcoded, drives LLM behavior) ───
+const DEFAULT_SYSTEM_PROMPT = `You are a market research and competitive intelligence analyst for Lunim.
+
+You will receive:
+1. A company profile describing Lunim, its four business pillars, and reference competitors.
+2. A set of MANDATORY intelligence categories that define the types of information you must search for.
+3. A user's intelligence request that may focus on specific areas or ask for a general overview.
+
+Your job:
+1. Based on Lunim's company profile, identify the top {COUNT} competitors across the four pillars Lunim operates in.
+2. Read the user's intelligence request carefully. Their request may emphasize certain intelligence categories (e.g. "focus on funding rounds" or "what marketing campaigns worked") — if so, weight your search queries toward those areas while still maintaining broad coverage.
+3. If the user's request is general, ensure balanced coverage across ALL mandatory intelligence categories.
+4. For each competitor, craft a Tavily web-search query that captures the intelligence the user is asking for. The query should be specific, current (2026), and actionable.
+
+Respond with ONLY a valid JSON array. No markdown, no explanation.
+Each object must have exactly these keys:
+- "name": the company or entity name
+- "space": a short category label (e.g. "AI Video", "EdTech", "SaaS", etc.)
+- "query": a Tavily web-search query tailored to the user's request and intelligence categories`;
+
+const DEFAULT_COMPETITOR_COUNT = 20;
+
+// ─── Dynamic space colors (assigns colors consistently based on space name) ───
+const SPACE_COLOR_PALETTE = [
+  '#e11d48', '#10b981', '#7c3aed', '#2563eb',
+  '#f59e0b', '#06b6d4', '#ec4899', '#84cc16',
+  '#8b5cf6', '#14b8a6', '#f97316', '#6366f1',
+  '#ef4444', '#22c55e', '#a855f7', '#0ea5e9'
+];
+
+const spaceColorMap = new Map();
+let colorIndex = 0;
+
 function getSpaceColor(space) {
   if (!space) return '#6366f1';
-  const s = space.toLowerCase();
-  if (s.includes('film') || s.includes('entertainment')) return '#e11d48';
-  if (s.includes('ux') || s.includes('design')) return '#10b981';
-  if (s.includes('video') || s.includes('studio') || s.includes('generat')) return '#7c3aed';
-  if (s.includes('education') || s.includes('learning')) return '#2563eb';
-  return '#6366f1';
+  const key = space.toLowerCase().trim();
+  if (!spaceColorMap.has(key)) {
+    spaceColorMap.set(key, SPACE_COLOR_PALETTE[colorIndex % SPACE_COLOR_PALETTE.length]);
+    colorIndex++;
+  }
+  return spaceColorMap.get(key);
 }
 
 // ─── Trend classes ───
@@ -82,6 +105,11 @@ const competitorGrid = document.getElementById('competitor-grid');
 const signalCountBadge = document.getElementById('signal-count-badge');
 const competitorCountBadge = document.getElementById('competitor-count-badge');
 const resetPromptBtn = document.getElementById('reset-prompt');
+
+// Competitor count elements
+const competitorCountSlider = document.getElementById('competitor-count-slider');
+const competitorCountValue = document.getElementById('competitor-count-value');
+
 
 // Password elements
 const keysLockScreen = document.getElementById('keys-lock-screen');
@@ -129,6 +157,20 @@ if (resetPromptBtn) {
   resetPromptBtn.addEventListener('click', () => {
     promptTextarea.value = DEFAULT_PROMPT;
     localStorage.removeItem('intelligence-prompt');
+  });
+}
+
+// ─── Competitor Count Slider ───
+if (competitorCountSlider) {
+  const savedCount = localStorage.getItem('competitor-count');
+  if (savedCount) {
+    competitorCountSlider.value = savedCount;
+    if (competitorCountValue) competitorCountValue.textContent = savedCount;
+  }
+  competitorCountSlider.addEventListener('input', () => {
+    const val = competitorCountSlider.value;
+    if (competitorCountValue) competitorCountValue.textContent = val;
+    localStorage.setItem('competitor-count', val);
   });
 }
 
@@ -295,28 +337,34 @@ async function handleRefresh() {
   refreshBtn.disabled = true;
   setApiStatus('working', 'Discovering...');
 
-  // The editable prompt (customizable per department)
-  const editablePrompt = promptTextarea ? promptTextarea.value.trim() : DEFAULT_PROMPT;
+  // Reset color map for fresh results
+  spaceColorMap.clear();
+  colorIndex = 0;
 
-  // ALWAYS inject hardcoded Lunim context + the editable prompt
-  const fullPrompt = `${LUNIM_CONTEXT_INJECTION}\n\n== DEPARTMENT INSTRUCTIONS ==\n${editablePrompt}`;
+  // Combine: company context + intelligence categories + user's question
+  const intelligenceQuestion = promptTextarea ? promptTextarea.value.trim() : DEFAULT_PROMPT;
+  const fullUserPrompt = `${LUNIM_COMPANY_CONTEXT}\n\n${INTELLIGENCE_CATEGORIES}\n\n--- User Intelligence Request ---\n${intelligenceQuestion}`;
+
+  // Get competitor count and build system prompt (with {COUNT} placeholder replaced)
+  const competitorCount = competitorCountSlider ? parseInt(competitorCountSlider.value) : DEFAULT_COMPETITOR_COUNT;
+  const systemPrompt = DEFAULT_SYSTEM_PROMPT.replace(/\{COUNT\}/g, competitorCount);
 
   try {
     // STEP 1: Discover competitors
-    showProgress('STEP 1 — DISCOVERING COMPETITORS...', 'Sending prompt to LLM...');
+    showProgress('STEP 1 — DISCOVERING COMPETITORS...', `Finding top ${competitorCount} competitors...`);
 
     const llmResponse = await callLLM(
-      `You are a market research analyst for ${LUNIM_PROFILE.name}, a tech company in the ${LUNIM_PROFILE.industry} space. Respond with ONLY a valid JSON array. No markdown. Each object must have: "name", "space", "query". Focus on competitors relevant to the company's industry and pillars.`,
-      fullPrompt, 3000
+      systemPrompt,
+      fullUserPrompt, 3000
     );
 
     let competitors;
     try {
       let cleaned = llmResponse.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
       competitors = JSON.parse(cleaned);
-    } catch { throw new Error('Failed to parse LLM response. Check your prompt.'); }
+    } catch { throw new Error('Failed to parse LLM response. Try adjusting your prompt.'); }
 
-    if (!Array.isArray(competitors) || !competitors.length) throw new Error('No competitors found.');
+    if (!Array.isArray(competitors) || !competitors.length) throw new Error('No competitors found. Try adjusting your prompt.');
 
     renderCompetitorCards(competitors.map(c => ({ ...c, trend: 'Pending' })));
 
