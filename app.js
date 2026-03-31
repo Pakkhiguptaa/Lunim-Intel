@@ -110,6 +110,13 @@ const resetPromptBtn = document.getElementById('reset-prompt');
 const competitorCountSlider = document.getElementById('competitor-count-slider');
 const competitorCountValue = document.getElementById('competitor-count-value');
 
+// Save and Repository references
+const savePromptBtn = document.getElementById('save-prompt');
+const navItems = document.querySelectorAll('.nav-item');
+const dashboardView = document.getElementById('dashboard-view');
+const repositoryView = document.getElementById('repository-view');
+const repositoryGrid = document.getElementById('prompt-repository-grid');
+
 
 // Password elements
 const keysLockScreen = document.getElementById('keys-lock-screen');
@@ -173,6 +180,126 @@ if (competitorCountSlider) {
     localStorage.setItem('competitor-count', val);
   });
 }
+
+// ─── Save Prompt ───
+if (savePromptBtn) {
+  savePromptBtn.addEventListener('click', () => {
+    const prompt = (promptTextarea ? promptTextarea.value.trim() : '').trim();
+    if (!prompt) return;
+
+    let savedPrompts = JSON.parse(localStorage.getItem('saved-prompts') || '[]');
+    
+    // Avoid duplicates
+    if (savedPrompts.find(p => p.text === prompt)) {
+      alert('Prompt is already saved in the repository.');
+      return;
+    }
+
+    const newPrompt = {
+      id: Date.now(),
+      text: prompt,
+      date: new Date().toLocaleDateString()
+    };
+
+    savedPrompts.unshift(newPrompt); // Add to beginning
+    localStorage.setItem('saved-prompts', JSON.stringify(savedPrompts));
+    
+    // Feedback
+    savePromptBtn.innerHTML = '✅ Prompt Saved';
+    savePromptBtn.disabled = true;
+    setTimeout(() => {
+      savePromptBtn.innerHTML = `
+        <svg style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+        Save Prompt
+      `;
+      savePromptBtn.disabled = false;
+    }, 2000);
+    
+    renderRepository();
+  });
+}
+
+// ─── Repository Management ───
+function renderRepository() {
+  if (!repositoryGrid) return;
+  const savedPrompts = JSON.parse(localStorage.getItem('saved-prompts') || '[]');
+  
+  if (savedPrompts.length === 0) {
+    repositoryGrid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📁</div>
+        <h3>No saved prompts yet</h3>
+        <p>Go to the Dashboard and click "Save Prompt" to start building your repository.</p>
+      </div>
+    `;
+    return;
+  }
+
+  repositoryGrid.innerHTML = '';
+  savedPrompts.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'prompt-card';
+    
+    card.innerHTML = `
+      <div class="prompt-card-header">
+        <div>
+          <div class="prompt-card-title">Saved Prompt</div>
+          <div class="prompt-card-date">${p.date}</div>
+        </div>
+      </div>
+      <div class="prompt-card-content">${p.text}</div>
+      <div class="prompt-card-actions">
+        <button class="btn-primary btn-action use-prompt-btn" data-id="${p.id}">Use Prompt</button>
+        <button class="btn-delete btn-action delete-prompt-btn" data-id="${p.id}">Delete</button>
+      </div>
+    `;
+
+    // Event listeners
+    card.querySelector('.use-prompt-btn').addEventListener('click', () => {
+      if (promptTextarea) {
+        promptTextarea.value = p.text;
+        localStorage.setItem('intelligence-prompt', p.text);
+      }
+      switchView('dashboard');
+    });
+
+    card.querySelector('.delete-prompt-btn').addEventListener('click', () => {
+      let currentPrompts = JSON.parse(localStorage.getItem('saved-prompts') || '[]');
+      currentPrompts = currentPrompts.filter(item => item.id !== p.id);
+      localStorage.setItem('saved-prompts', JSON.stringify(currentPrompts));
+      renderRepository();
+    });
+
+    repositoryGrid.appendChild(card);
+  });
+}
+
+// ─── View Switching ───
+function switchView(viewName) {
+  if (viewName === 'dashboard') {
+    dashboardView.style.display = 'block';
+    repositoryView.style.display = 'none';
+  } else if (viewName === 'repository') {
+    dashboardView.style.display = 'none';
+    repositoryView.style.display = 'block';
+    renderRepository();
+  }
+
+  // Update nav UI
+  navItems.forEach(item => {
+    if (item.dataset.view === viewName) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
+}
+
+navItems.forEach(item => {
+  item.addEventListener('click', () => {
+    switchView(item.dataset.view);
+  });
+});
 
 // ─── Render Signals (with source links) ───
 function renderSignals(data) {

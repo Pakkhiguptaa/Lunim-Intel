@@ -26,6 +26,12 @@
         <button id="reset-prompt" class="prompt-reset-btn" title="Reset to default">↻</button>
       </div>
       <textarea id="intelligence-prompt" class="sidebar-prompt-textarea" spellcheck="false" placeholder="What would you like to know about our competitors?">Give me a general overview of what our competitors are doing — cover all areas including deals, product updates, partnerships, and market moves.</textarea>
+      <div class="sidebar-prompt-actions">
+        <button id="save-prompt" class="btn-secondary btn-small">
+          <svg style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          Save Prompt
+        </button>
+      </div>
       <div class="sidebar-prompt-examples">
         <span class="examples-label">💡 Try focusing on specific areas:</span>
         <ul class="examples-list">
@@ -37,6 +43,18 @@
         </ul>
       </div>
     </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-view="dashboard">
+        <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-item" data-view="repository">
+        <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"></path></svg>
+        <span>Prompt Repository</span>
+      </button>
+    </nav>
 
     <!-- Competitor Count -->
     <div class="sidebar-competitor-count">
@@ -92,49 +110,72 @@
 
   <!-- Main Content -->
   <main class="main-content">
-    <header>
-      <div class="header-title">
-        <h1>Competitor Intelligence</h1>
-      </div>
-      <div class="header-actions">
-        <button class="btn-primary" id="refresh-action">
-          <svg style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path></svg>
-          Run Intelligent Search
-        </button>
-      </div>
-    </header>
-
-    <div class="split-panels">
-      <!-- LEFT: Press Summaries & Source Links -->
-      <section class="panel panel-left">
-        <div class="panel-header">
-          <h2 class="panel-title">Live Press Signals</h2>
-          <span class="panel-badge" id="signal-count-badge">0 Signals</span>
+    <div id="dashboard-view" class="view-container">
+      <header>
+        <div class="header-title">
+          <h1>Competitor Intelligence</h1>
         </div>
-        <div class="signal-list" id="intelligence-list">
-          <div class="signal-item signal-empty">
-            <div class="signal-time">
-              <span class="signal-dot dot-cached"></span>
-              WAITING...
+        <div class="header-actions">
+          <button class="btn-primary" id="refresh-action">
+            <svg style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path></svg>
+            Run Intelligent Search
+          </button>
+        </div>
+      </header>
+
+      <div class="split-panels">
+        <!-- LEFT: Press Summaries & Source Links -->
+        <section class="panel panel-left">
+          <div class="panel-header">
+            <h2 class="panel-title">Live Press Signals</h2>
+            <span class="panel-badge" id="signal-count-badge">0 Signals</span>
+          </div>
+          <div class="signal-list" id="intelligence-list">
+            <div class="signal-item signal-empty">
+              <div class="signal-time">
+                <span class="signal-dot dot-cached"></span>
+                WAITING...
+              </div>
+              <div class="one-line-summary">Enter your API keys and click "Run Intelligent Search" to discover competitors and fetch live press.</div>
             </div>
-            <div class="one-line-summary">Enter your API keys and click "Run Intelligent Search" to discover competitors and fetch live press.</div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- RIGHT: Competitor Logos & Trends (Red Glow) -->
-      <section class="panel panel-right panel-red-glow">
-        <div class="panel-header">
-          <h2 class="panel-title">Competitor Landscape</h2>
-          <span class="panel-badge" id="competitor-count-badge">0 Found</span>
+        <!-- RIGHT: Competitor Logos & Trends (Red Glow) -->
+        <section class="panel panel-right panel-red-glow">
+          <div class="panel-header">
+            <h2 class="panel-title">Competitor Landscape</h2>
+            <span class="panel-badge" id="competitor-count-badge">0 Found</span>
+          </div>
+          <div class="competitor-grid" id="competitor-grid">
+            <div class="comp-card comp-card-empty">
+              <div class="comp-logo" style="background: rgba(255,255,255,0.05);">?</div>
+              <span class="comp-name">Waiting...</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- VIEW: Prompt Repository -->
+    <div id="repository-view" class="view-container" style="display: none;">
+      <header>
+        <div class="header-title">
+          <h1>Prompt Repository</h1>
+          <p class="header-subtitle">Your collection of optimized intelligence prompts</p>
         </div>
-        <div class="competitor-grid" id="competitor-grid">
-          <div class="comp-card comp-card-empty">
-            <div class="comp-logo" style="background: rgba(255,255,255,0.05);">?</div>
-            <span class="comp-name">Waiting...</span>
+      </header>
+
+      <div class="repository-container">
+        <div class="repository-grid" id="prompt-repository-grid">
+          <!-- Prompts will be rendered here -->
+          <div class="empty-state">
+            <div class="empty-icon">📁</div>
+            <h3>No saved prompts yet</h3>
+            <p>Go to the Dashboard and click "Save Prompt" to start building your repository.</p>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   </main>
 
