@@ -32,16 +32,6 @@
           Save Prompt
         </button>
       </div>
-      <div class="sidebar-prompt-examples">
-        <span class="examples-label">💡 Try focusing on specific areas:</span>
-        <ul class="examples-list">
-          <li><strong>Funding:</strong> What funding rounds, acquisitions, or business deals have our competitors closed recently?</li>
-          <li><strong>Products:</strong> What new features, tools, or platform updates have competitors launched?</li>
-          <li><strong>Campaigns:</strong> What marketing campaigns or brand moves have competitors made that gained traction?</li>
-          <li><strong>Partnerships:</strong> What strategic partnerships or integrations have been announced?</li>
-          <li><strong>Customer Intel:</strong> What are customers saying about competitor products — any common requests or complaints?</li>
-        </ul>
-      </div>
     </div>
 
     <!-- Navigation -->
@@ -166,14 +156,12 @@
         </div>
       </header>
 
-      <div class="repository-container">
-        <div class="repository-grid" id="prompt-repository-grid">
-          <!-- Prompts will be rendered here -->
-          <div class="empty-state">
-            <div class="empty-icon">📁</div>
-            <h3>No saved prompts yet</h3>
-            <p>Go to the Dashboard and click "Save Prompt" to start building your repository.</p>
-          </div>
+      <div class="repository-container" id="repository-sections-container">
+        <!-- Sections will be rendered here dynamically -->
+        <div class="empty-state" id="repository-empty-state">
+          <div class="empty-icon">📁</div>
+          <h3>No saved prompts yet</h3>
+          <p>Go to the Dashboard and click "Save Prompt" to start building your repository.</p>
         </div>
       </div>
     </div>

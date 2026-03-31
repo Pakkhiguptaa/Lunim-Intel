@@ -115,7 +115,34 @@ const savePromptBtn = document.getElementById('save-prompt');
 const navItems = document.querySelectorAll('.nav-item');
 const dashboardView = document.getElementById('dashboard-view');
 const repositoryView = document.getElementById('repository-view');
-const repositoryGrid = document.getElementById('prompt-repository-grid');
+const repositorySectionsContainer = document.getElementById('repository-sections-container');
+const repositoryEmptyState = document.getElementById('repository-empty-state');
+
+// ─── Initial Repository Examples ───
+const REPOSITORY_EXAMPLES = [
+  { id: 'ex1', category: 'Funding', text: 'What funding rounds, acquisitions, or business deals have our competitors closed recently?', date: 'System' },
+  { id: 'ex2', category: 'Products', text: 'What new features, tools, or platform updates have competitors launched?', date: 'System' },
+  { id: 'ex3', category: 'Campaigns', text: 'What marketing campaigns or brand moves have competitors made that gained traction?', date: 'System' },
+  { id: 'ex4', category: 'Partnerships', text: 'What strategic partnerships or integrations have been announced?', date: 'System' },
+  { id: 'ex5', category: 'Customer Intel', text: 'What are customers saying about competitor products — any common requests or complaints?', date: 'System' }
+];
+
+// ─── Categorization Logic ───
+const CATEGORY_MAP = {
+  'Funding': ['funding', 'acquisitions', 'deals', 'rounds', 'm&a', 'capital', 'investment', 'venture'],
+  'Products': ['features', 'tools', 'platform', 'updates', 'launched', 'software', 'hardware', 'release', 'product'],
+  'Campaigns': ['marketing', 'campaigns', 'brand', 'moves', 'traction', 'advertising', 'viral', 'gtm'],
+  'Partnerships': ['partnerships', 'integrations', 'collaborations', 'alliances', 'joint', 'ecosystem'],
+  'Customer Intel': ['customers', 'saying', 'reviews', 'complaints', 'requests', 'feedback', 'sentiment', 'pain points', 'users']
+};
+
+function getPromptCategory(text) {
+  const content = text.toLowerCase();
+  for (const [category, keywords] of Object.entries(CATEGORY_MAP)) {
+    if (keywords.some(k => content.includes(k))) return category;
+  }
+  return 'General';
+}
 
 
 // Password elements
@@ -198,6 +225,7 @@ if (savePromptBtn) {
     const newPrompt = {
       id: Date.now(),
       text: prompt,
+      category: getPromptCategory(prompt),
       date: new Date().toLocaleDateString()
     };
 
@@ -221,56 +249,87 @@ if (savePromptBtn) {
 
 // ─── Repository Management ───
 function renderRepository() {
-  if (!repositoryGrid) return;
+  if (!repositorySectionsContainer) return;
   const savedPrompts = JSON.parse(localStorage.getItem('saved-prompts') || '[]');
   
-  if (savedPrompts.length === 0) {
-    repositoryGrid.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">📁</div>
-        <h3>No saved prompts yet</h3>
-        <p>Go to the Dashboard and click "Save Prompt" to start building your repository.</p>
-      </div>
-    `;
+  // Combine examples with saved prompts
+  const allPrompts = [...REPOSITORY_EXAMPLES, ...savedPrompts];
+  
+  // Group by category
+  const grouped = allPrompts.reduce((acc, p) => {
+    if (!acc[p.category]) acc[p.category] = [];
+    acc[p.category].push(p);
+    return acc;
+  }, {});
+
+  // Define sort order
+  const categories = ['Funding', 'Products', 'Campaigns', 'Partnerships', 'Customer Intel', 'General'];
+
+  repositorySectionsContainer.innerHTML = '';
+  
+  const hasItems = Object.keys(grouped).length > 0;
+  if (!hasItems) {
+    if (repositoryEmptyState) repositoryEmptyState.style.display = 'flex';
     return;
   }
+  if (repositoryEmptyState) repositoryEmptyState.style.display = 'none';
 
-  repositoryGrid.innerHTML = '';
-  savedPrompts.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'prompt-card';
+  categories.forEach(category => {
+    if (!grouped[category] || grouped[category].length === 0) return;
+
+    const section = document.createElement('div');
+    section.className = 'repository-section';
     
-    card.innerHTML = `
-      <div class="prompt-card-header">
-        <div>
-          <div class="prompt-card-title">Saved Prompt</div>
-          <div class="prompt-card-date">${p.date}</div>
-        </div>
+    section.innerHTML = `
+      <div class="section-header">
+        <span class="section-title">${category}</span>
+        <span class="section-count">${grouped[category].length}</span>
       </div>
-      <div class="prompt-card-content">${p.text}</div>
-      <div class="prompt-card-actions">
-        <button class="btn-primary btn-action use-prompt-btn" data-id="${p.id}">Use Prompt</button>
-        <button class="btn-delete btn-action delete-prompt-btn" data-id="${p.id}">Delete</button>
-      </div>
+      <div class="repository-grid"></div>
     `;
 
-    // Event listeners
-    card.querySelector('.use-prompt-btn').addEventListener('click', () => {
-      if (promptTextarea) {
-        promptTextarea.value = p.text;
-        localStorage.setItem('intelligence-prompt', p.text);
+    const grid = section.querySelector('.repository-grid');
+    
+    grouped[category].forEach(p => {
+      const isSystem = p.date === 'System';
+      const card = document.createElement('div');
+      card.className = 'prompt-card';
+      
+      card.innerHTML = `
+        <div class="prompt-card-header">
+          <div>
+            <div class="prompt-card-title">${isSystem ? 'Template' : 'Saved Prompt'}</div>
+            <div class="prompt-card-date">${p.date}</div>
+          </div>
+        </div>
+        <div class="prompt-card-content">${p.text}</div>
+        <div class="prompt-card-actions">
+          <button class="btn-primary btn-action use-prompt-btn" data-id="${p.id}">Use Prompt</button>
+          ${!isSystem ? `<button class="btn-delete btn-action delete-prompt-btn" data-id="${p.id}">Delete</button>` : ''}
+        </div>
+      `;
+
+      card.querySelector('.use-prompt-btn').addEventListener('click', () => {
+        if (promptTextarea) {
+          promptTextarea.value = p.text;
+          localStorage.setItem('intelligence-prompt', p.text);
+        }
+        switchView('dashboard');
+      });
+
+      if (!isSystem) {
+        card.querySelector('.delete-prompt-btn').addEventListener('click', () => {
+          let currentPrompts = JSON.parse(localStorage.getItem('saved-prompts') || '[]');
+          currentPrompts = currentPrompts.filter(item => item.id !== p.id);
+          localStorage.setItem('saved-prompts', JSON.stringify(currentPrompts));
+          renderRepository();
+        });
       }
-      switchView('dashboard');
+
+      grid.appendChild(card);
     });
 
-    card.querySelector('.delete-prompt-btn').addEventListener('click', () => {
-      let currentPrompts = JSON.parse(localStorage.getItem('saved-prompts') || '[]');
-      currentPrompts = currentPrompts.filter(item => item.id !== p.id);
-      localStorage.setItem('saved-prompts', JSON.stringify(currentPrompts));
-      renderRepository();
-    });
-
-    repositoryGrid.appendChild(card);
+    repositorySectionsContainer.appendChild(section);
   });
 }
 
