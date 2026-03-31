@@ -167,6 +167,21 @@
     </div>
   </main>
 
+  <!-- Modal: Add Prompt -->
+  <div class="prompt-modal-overlay" id="add-prompt-modal">
+    <div class="prompt-modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Add Prompt</h2>
+        <p>This prompt will be saved to the <span id="modal-category" style="color: var(--accent-tertiary); font-weight: 700;">General</span> section.</p>
+      </div>
+      <textarea id="modal-prompt-text" class="modal-textarea" placeholder="Enter your high-performing prompt here..."></textarea>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="modal-cancel">Cancel</button>
+        <button class="btn-primary" id="modal-save">Save Prompt</button>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>

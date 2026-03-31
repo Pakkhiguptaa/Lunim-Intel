@@ -118,6 +118,15 @@ const repositoryView = document.getElementById('repository-view');
 const repositorySectionsContainer = document.getElementById('repository-sections-container');
 const repositoryEmptyState = document.getElementById('repository-empty-state');
 
+// Modal Elements
+const addPromptModal = document.getElementById('add-prompt-modal');
+const modalPromptText = document.getElementById('modal-prompt-text');
+const modalCategoryLabel = document.getElementById('modal-category');
+const modalSaveBtn = document.getElementById('modal-save');
+const modalCancelBtn = document.getElementById('modal-cancel');
+
+let currentModalCategory = 'General';
+
 // ─── Initial Repository Examples ───
 const REPOSITORY_EXAMPLES = [
   { id: 'ex1', category: 'Funding', text: 'What funding rounds, acquisitions, or business deals have our competitors closed recently?', date: 'System' },
@@ -290,6 +299,16 @@ function renderRepository() {
 
     const grid = section.querySelector('.repository-grid');
     
+    // Add "Add Prompt" Card
+    const addCard = document.createElement('div');
+    addCard.className = 'add-prompt-card';
+    addCard.innerHTML = `
+      <div class="add-prompt-icon">+</div>
+      <div class="add-prompt-text">Add to ${category}</div>
+    `;
+    addCard.addEventListener('click', () => openAddModal(category));
+    grid.appendChild(addCard);
+
     grouped[category].forEach(p => {
       const isSystem = p.date === 'System';
       const card = document.createElement('div');
@@ -618,3 +637,47 @@ document.querySelectorAll('.toggle-visibility').forEach(btn => {
     if (input) { input.type = input.type === 'password' ? 'text' : 'password'; btn.textContent = input.type === 'password' ? '👁' : '🔒'; }
   });
 });
+
+// ─── Modal Logic ───
+function openAddModal(category) {
+  if (!addPromptModal || !modalCategoryLabel || !modalPromptText) return;
+  currentModalCategory = category;
+  modalCategoryLabel.textContent = category;
+  modalPromptText.value = '';
+  addPromptModal.classList.add('active');
+  modalPromptText.focus();
+}
+
+function closeAddModal() {
+  if (addPromptModal) addPromptModal.classList.remove('active');
+}
+
+if (modalCancelBtn) modalCancelBtn.addEventListener('click', closeAddModal);
+
+if (modalSaveBtn) {
+  modalSaveBtn.addEventListener('click', () => {
+    const text = modalPromptText.value.trim();
+    if (!text) return;
+
+    let savedPrompts = JSON.parse(localStorage.getItem('saved-prompts') || '[]');
+    const newPrompt = {
+      id: Date.now(),
+      text: text,
+      category: currentModalCategory,
+      date: new Date().toLocaleDateString()
+    };
+
+    savedPrompts.unshift(newPrompt);
+    localStorage.setItem('saved-prompts', JSON.stringify(savedPrompts));
+    
+    closeAddModal();
+    renderRepository();
+  });
+}
+
+// Close modal on click outside
+if (addPromptModal) {
+  addPromptModal.addEventListener('click', (e) => {
+    if (e.target === addPromptModal) closeAddModal();
+  });
+}
