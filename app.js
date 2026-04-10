@@ -190,7 +190,7 @@ if (githubInput) githubInput.value = localStorage.getItem('github-key') || '';
 const _defaults = window.LUNIM_DEFAULTS || {};
 if (notionKeyInput) notionKeyInput.value = localStorage.getItem('notion-key') || _defaults.notionKey || '';
 if (notionPageInput) notionPageInput.value = localStorage.getItem('notion-page-id') || _defaults.notionPageId || '';
-if (notionDbInput) notionDbInput.value = localStorage.getItem('notion-db-id') || _defaults.notionDbId || '';
+if (notionDbInput) notionDbInput.value = _defaults.notionDbId || localStorage.getItem('notion-db-id') || '';
 
 // ─── Pre-fill prompt from LocalStorage or use default ───
 if (promptTextarea) {

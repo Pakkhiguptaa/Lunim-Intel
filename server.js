@@ -28,6 +28,8 @@ app.use(express.static(path.join(__dirname)));
 app.post('/api/notion', async (req, res) => {
   const { endpoint, body, method, headers } = req.body;
 
+  console.log(`[Notion] ${method || 'POST'} /${endpoint}`);
+
   try {
     const response = await fetch(`https://api.notion.com/v1/${endpoint}`, {
       method: method || 'POST',
@@ -40,9 +42,10 @@ app.post('/api/notion', async (req, res) => {
     });
 
     const data = await response.json();
+    console.log(`[Notion] Response: ${response.status} — ${data.object === 'error' ? data.message : 'OK'}`);
     return res.status(response.status).json(data);
   } catch (error) {
-    console.error('Notion Proxy Error:', error);
+    console.error('[Notion] Proxy Error:', error.message);
     return res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 });
