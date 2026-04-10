@@ -98,6 +98,10 @@ const listElement = document.getElementById('intelligence-list');
 const refreshBtn = document.getElementById('refresh-action');
 const tavilyInput = document.getElementById('tavily-key');
 const githubInput = document.getElementById('github-key');
+const notionKeyInput = document.getElementById('notion-key');
+const notionPageInput = document.getElementById('notion-page-id');
+const notionDbInput = document.getElementById('notion-db-id');
+
 const statusDot = document.getElementById('api-status-dot');
 const statusText = document.getElementById('api-status-text');
 const promptTextarea = document.getElementById('intelligence-prompt');
@@ -183,6 +187,9 @@ function attemptUnlock() {
 // ─── Pre-fill API keys from LocalStorage ───
 if (tavilyInput) tavilyInput.value = localStorage.getItem('tavily-key') || '';
 if (githubInput) githubInput.value = localStorage.getItem('github-key') || '';
+if (notionKeyInput) notionKeyInput.value = localStorage.getItem('notion-key') || '';
+if (notionPageInput) notionPageInput.value = localStorage.getItem('notion-page-id') || '';
+if (notionDbInput) notionDbInput.value = localStorage.getItem('notion-db-id') || '';
 
 // ─── Pre-fill prompt from LocalStorage or use default ───
 if (promptTextarea) {
@@ -460,9 +467,121 @@ function setApiStatus(state, customText) {
 function checkApiStatus() {
   const hasTavily = tavilyInput && tavilyInput.value.trim().length > 0;
   const hasGithub = githubInput && githubInput.value.trim().length > 0;
-  if (hasTavily && hasGithub) setApiStatus('connected');
-  else if (hasTavily) setApiStatus('partial');
+  const hasNotion = notionKeyInput && notionKeyInput.value.trim().length > 0;
+  
+  if (hasTavily && hasGithub && hasNotion) setApiStatus('connected');
+  else if (hasTavily && hasGithub) setApiStatus('partial', 'Missing Notion');
+  else if (hasTavily) setApiStatus('partial', 'Tavily Only');
   else setApiStatus('disconnected');
+}
+
+// ─── Notion API Call ───
+async function callNotionProxy(endpoint, method, body) {
+  const token = notionKeyInput ? notionKeyInput.value.trim() : '';
+  if (!token) throw new Error('Notion API Key is required.');
+
+  // Routing through the Vercel internal /api/notion proxy to bypass CORS
+  const response = await fetch('/api/notion', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      endpoint: endpoint,
+      method: method,
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: body
+    })
+  });
+
+  if (!response.ok) {
+    let errorMsg = response.statusText;
+    try {
+      const errorBody = await response.json();
+      errorMsg = errorBody.message || errorMsg;
+    } catch (_) {}
+    throw new Error(`Notion Proxy Error (${response.status}): ${errorMsg}`);
+  }
+  return await response.json();
+}
+
+async function ensureNotionDatabase() {
+  let dbId = notionDbInput ? notionDbInput.value.trim() : '';
+  if (dbId) return dbId;
+
+  const pageId = notionPageInput ? notionPageInput.value.trim() : '';
+  if (!pageId) throw new Error('Notion Page ID is required to create a database.');
+
+  showProgress('NOTION', 'Creating intelligence database...');
+
+  const dbSchema = {
+    parent: { type: "page_id", page_id: pageId },
+    title: [{ type: "text", text: { content: "Lunim Intel Search Results" } }],
+    properties: {
+      "Company": { title: {} },
+      "Space": { rich_text: {} },
+      "Trend": { select: { options: [
+        { name: "Trending", color: "red" },
+        { name: "High Growth", color: "purple" },
+        { name: "Steady", color: "blue" },
+        { name: "Emerging", color: "green" },
+        { name: "Stagnant", color: "orange" },
+        { name: "Declining", color: "gray" }
+      ]}},
+      "Summary": { rich_text: {} },
+      "Sources": { url: {} },
+      "Search Date": { date: {} },
+      "Prompt": { rich_text: {} }
+    }
+  };
+
+  const db = await callNotionProxy('databases', 'POST', dbSchema);
+  dbId = db.id;
+  if (notionDbInput) {
+    notionDbInput.value = dbId;
+    localStorage.setItem('notion-db-id', dbId);
+  }
+  return dbId;
+}
+
+async function syncToNotion(enrichedCompetitors, liveSignals, prompt) {
+  try {
+    const dbId = await ensureNotionDatabase();
+
+    const searchDate = new Date().toISOString();
+
+    for (const signal of liveSignals) {
+      const comp = enrichedCompetitors.find(c => c.name === signal.company) || {};
+      const firstSource = signal.sources && signal.sources.length > 0 ? signal.sources[0].url : '';
+
+      const pageData = {
+        parent: { database_id: dbId },
+        properties: {
+          "Company": { title: [{ text: { content: signal.company } }] },
+          "Space": { rich_text: [{ text: { content: comp.space || "N/A" } }] },
+          "Trend": { select: { name: comp.trend || "Steady" } },
+          "Summary": { rich_text: [{ text: { content: signal.summary } }] },
+          "Search Date": { date: { start: searchDate } },
+          "Prompt": { rich_text: [{ text: { content: prompt } }] }
+        }
+      };
+
+      if (firstSource) {
+        pageData.properties["Sources"] = { url: firstSource };
+      }
+
+      await callNotionProxy('pages', 'POST', pageData);
+    }
+    
+    return true;
+  } catch (err) {
+    console.error('Notion Sync Failed:', err);
+    listElement.innerHTML += `
+      <div class="signal-item" style="border-color: var(--accent-danger); background: rgba(239, 68, 68, 0.1);">
+        <div class="signal-time"><span class="signal-dot dot-error"></span>NOTION SYNC FAILED</div>
+        <div class="one-line-summary">⚠ ${err.message}</div>
+        <div style="font-size: 0.6rem; margin-top: 4px; opacity: 0.7;">Check that your Notion Integration is added to the Parent Page via "Connect to".</div>
+      </div>`;
+    throw err;
+  }
 }
 
 // ─── LLM Call ───
@@ -611,6 +730,16 @@ async function handleRefresh() {
 
     renderCompetitorCards(enrichedCompetitors);
     renderSignals(liveSignals);
+
+    // STEP 4: Sync to Notion (non-destructive — signals are already rendered)
+    try {
+      await syncToNotion(enrichedCompetitors, liveSignals, intelligenceQuestion);
+      setApiStatus('connected', 'All Data Synced');
+    } catch (notionErr) {
+      // Notion failure is non-fatal: results are already displayed
+      setApiStatus('partial', 'Notion sync failed');
+    }
+
   } catch (e) {
     listElement.innerHTML = `
       <div class="signal-item">
@@ -630,6 +759,9 @@ refreshBtn.addEventListener('click', handleRefresh);
 
 if (tavilyInput) tavilyInput.addEventListener('input', () => { localStorage.setItem('tavily-key', tavilyInput.value.trim()); checkApiStatus(); });
 if (githubInput) githubInput.addEventListener('input', () => { localStorage.setItem('github-key', githubInput.value.trim()); checkApiStatus(); });
+if (notionKeyInput) notionKeyInput.addEventListener('input', () => { localStorage.setItem('notion-key', notionKeyInput.value.trim()); checkApiStatus(); });
+if (notionPageInput) notionPageInput.addEventListener('input', () => { localStorage.setItem('notion-page-id', notionPageInput.value.trim()); checkApiStatus(); });
+if (notionDbInput) notionDbInput.addEventListener('input', () => { localStorage.setItem('notion-db-id', notionDbInput.value.trim()); checkApiStatus(); });
 
 document.querySelectorAll('.toggle-visibility').forEach(btn => {
   btn.addEventListener('click', () => {
