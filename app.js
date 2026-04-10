@@ -478,7 +478,7 @@ function checkApiStatus() {
 
 // ─── Notion API Call ───
 async function callNotionProxy(endpoint, method, body) {
-  const token = notionKeyInput ? notionKeyInput.value.trim() : '';
+  const token = (notionKeyInput ? notionKeyInput.value.trim() : '') || _defaults.notionKey || '';
   if (!token) throw new Error('Notion API Key is required.');
 
   // Routing through the Vercel internal /api/notion proxy to bypass CORS
@@ -505,10 +505,10 @@ async function callNotionProxy(endpoint, method, body) {
 }
 
 async function ensureNotionDatabase() {
-  let dbId = notionDbInput ? notionDbInput.value.trim() : '';
+  let dbId = (notionDbInput ? notionDbInput.value.trim() : '') || _defaults.notionDbId || '';
   if (dbId) return dbId;
 
-  const pageId = notionPageInput ? notionPageInput.value.trim() : '';
+  const pageId = (notionPageInput ? notionPageInput.value.trim() : '') || _defaults.notionPageId || '';
   if (!pageId) throw new Error('Notion Page ID is required to create a database.');
 
   const dbSchema = {
