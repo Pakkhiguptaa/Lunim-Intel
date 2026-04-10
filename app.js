@@ -190,7 +190,7 @@ if (githubInput) githubInput.value = localStorage.getItem('github-key') || '';
 const _defaults = window.LUNIM_DEFAULTS || {};
 if (notionKeyInput) notionKeyInput.value = localStorage.getItem('notion-key') || _defaults.notionKey || '';
 if (notionPageInput) notionPageInput.value = localStorage.getItem('notion-page-id') || _defaults.notionPageId || '';
-if (notionDbInput) notionDbInput.value = localStorage.getItem('notion-db-id') || '';
+if (notionDbInput) notionDbInput.value = localStorage.getItem('notion-db-id') || _defaults.notionDbId || '';
 
 // ─── Pre-fill prompt from LocalStorage or use default ───
 if (promptTextarea) {
@@ -511,8 +511,6 @@ async function ensureNotionDatabase() {
   const pageId = notionPageInput ? notionPageInput.value.trim() : '';
   if (!pageId) throw new Error('Notion Page ID is required to create a database.');
 
-  showProgress('NOTION', 'Creating intelligence database...');
-
   const dbSchema = {
     parent: { type: "page_id", page_id: pageId },
     title: [{ type: "text", text: { content: "Lunim Intel Search Results" } }],
@@ -556,12 +554,12 @@ async function syncToNotion(enrichedCompetitors, liveSignals, prompt) {
       const pageData = {
         parent: { database_id: dbId },
         properties: {
-          "Company": { title: [{ text: { content: signal.company } }] },
-          "Space": { rich_text: [{ text: { content: comp.space || "N/A" } }] },
+          "Company": { title: [{ text: { content: signal.company.substring(0, 100) } }] },
+          "Space": { rich_text: [{ text: { content: (comp.space || "N/A").substring(0, 100) } }] },
           "Trend": { select: { name: comp.trend || "Steady" } },
-          "Summary": { rich_text: [{ text: { content: signal.summary } }] },
+          "Summary": { rich_text: [{ text: { content: signal.summary.substring(0, 1999) } }] },
           "Search Date": { date: { start: searchDate } },
-          "Prompt": { rich_text: [{ text: { content: prompt } }] }
+          "Prompt": { rich_text: [{ text: { content: prompt.substring(0, 1999) } }] }
         }
       };
 

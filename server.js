@@ -14,7 +14,8 @@ app.get('/', (req, res) => {
   const defaults = `<script>
     window.LUNIM_DEFAULTS = {
       notionKey: "${process.env.NOTION_KEY || ''}",
-      notionPageId: "${process.env.NOTION_PAGE_ID || ''}"
+      notionPageId: "${process.env.NOTION_PAGE_ID || ''}",
+      notionDbId: "${process.env.NOTION_DB_ID || ''}"
     };
   </script>`;
   html = html.replace('</head>', `${defaults}\n</head>`);
