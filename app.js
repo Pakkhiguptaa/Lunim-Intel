@@ -187,8 +187,9 @@ function attemptUnlock() {
 // ─── Pre-fill API keys from LocalStorage ───
 if (tavilyInput) tavilyInput.value = localStorage.getItem('tavily-key') || '';
 if (githubInput) githubInput.value = localStorage.getItem('github-key') || '';
-if (notionKeyInput) notionKeyInput.value = localStorage.getItem('notion-key') || '';
-if (notionPageInput) notionPageInput.value = localStorage.getItem('notion-page-id') || '';
+const _defaults = window.LUNIM_DEFAULTS || {};
+if (notionKeyInput) notionKeyInput.value = localStorage.getItem('notion-key') || _defaults.notionKey || '';
+if (notionPageInput) notionPageInput.value = localStorage.getItem('notion-page-id') || _defaults.notionPageId || '';
 if (notionDbInput) notionDbInput.value = localStorage.getItem('notion-db-id') || '';
 
 // ─── Pre-fill prompt from LocalStorage or use default ───

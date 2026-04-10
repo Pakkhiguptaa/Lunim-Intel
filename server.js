@@ -1,11 +1,26 @@
 const express = require('express');
 const fetch = require('node-fetch');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+
+// Inject environment variables into index.html
+app.get('/', (req, res) => {
+  let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+  const defaults = `<script>
+    window.LUNIM_DEFAULTS = {
+      notionKey: "${process.env.NOTION_KEY || ''}",
+      notionPageId: "${process.env.NOTION_PAGE_ID || ''}"
+    };
+  </script>`;
+  html = html.replace('</head>', `${defaults}\n</head>`);
+  res.send(html);
+});
+
 app.use(express.static(path.join(__dirname)));
 
 // Notion proxy — bypasses browser CORS restrictions
