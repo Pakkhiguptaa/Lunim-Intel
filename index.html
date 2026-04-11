@@ -86,8 +86,12 @@
           </div>
         </div>
         <div class="keys-field">
-          <label class="keys-label">🌐 LLM Endpoint URL</label>
+          <label class="keys-label">🌐 LLM Endpoint <span style="opacity:0.5;font-size:0.75rem">(optional, defaults to OpenAI)</span></label>
           <input type="text" id="llm-endpoint" placeholder="https://api.openai.com/v1/chat/completions" autocomplete="off">
+        </div>
+        <div class="keys-field">
+          <label class="keys-label">🧠 Model Name <span style="opacity:0.5;font-size:0.75rem">(optional, defaults to gpt-4o)</span></label>
+          <input type="text" id="llm-model" placeholder="gpt-4o" autocomplete="off">
         </div>
         <div class="keys-field">
           <label class="keys-label">📝 Notion API Key</label>

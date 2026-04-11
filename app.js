@@ -591,7 +591,9 @@ async function callLLM(systemPrompt, userPrompt, maxTokens = 2000) {
   if (!token) throw new Error('LLM API Key is required. Unlock the keys section and enter your API key.');
 
   const endpointInput = document.getElementById('llm-endpoint');
+  const modelInput = document.getElementById('llm-model');
   const url = (endpointInput ? endpointInput.value.trim() : '') || 'https://api.openai.com/v1/chat/completions';
+  const model = (modelInput ? modelInput.value.trim() : '') || 'gpt-4o';
 
   const response = await fetch(url, {
     method: 'POST',
@@ -763,6 +765,9 @@ refreshBtn.addEventListener('click', handleRefresh);
 
 if (tavilyInput) tavilyInput.addEventListener('input', () => { localStorage.setItem('tavily-key', tavilyInput.value.trim()); checkApiStatus(); });
 if (llmEndpointInput) llmEndpointInput.addEventListener('input', () => { localStorage.setItem('llm-endpoint', llmEndpointInput.value.trim()); });
+const llmModelInput = document.getElementById('llm-model');
+if (llmModelInput) llmModelInput.value = localStorage.getItem('llm-model') || '';
+if (llmModelInput) llmModelInput.addEventListener('input', () => { localStorage.setItem('llm-model', llmModelInput.value.trim()); });
 if (githubInput) githubInput.addEventListener('input', () => { localStorage.setItem('github-key', githubInput.value.trim()); checkApiStatus(); });
 if (notionKeyInput) notionKeyInput.addEventListener('input', () => { localStorage.setItem('notion-key', notionKeyInput.value.trim()); checkApiStatus(); });
 if (notionPageInput) notionPageInput.addEventListener('input', () => { localStorage.setItem('notion-page-id', notionPageInput.value.trim()); checkApiStatus(); });
