@@ -187,6 +187,8 @@ function attemptUnlock() {
 // ─── Pre-fill API keys from LocalStorage ───
 if (tavilyInput) tavilyInput.value = localStorage.getItem('tavily-key') || '';
 if (githubInput) githubInput.value = localStorage.getItem('github-key') || '';
+const llmEndpointInput = document.getElementById('llm-endpoint');
+if (llmEndpointInput) llmEndpointInput.value = localStorage.getItem('llm-endpoint') || '';
 const _defaults = window.LUNIM_DEFAULTS || {};
 if (notionKeyInput) notionKeyInput.value = localStorage.getItem('notion-key') || _defaults.notionKey || '';
 if (notionPageInput) notionPageInput.value = localStorage.getItem('notion-page-id') || _defaults.notionPageId || '';
@@ -586,13 +588,16 @@ async function syncToNotion(enrichedCompetitors, liveSignals, prompt) {
 // ─── LLM Call ───
 async function callLLM(systemPrompt, userPrompt, maxTokens = 2000) {
   const token = githubInput ? githubInput.value.trim() : '';
-  if (!token) throw new Error('LLM API Key is required. Unlock the keys section and enter your OpenAI API key.');
+  if (!token) throw new Error('LLM API Key is required. Unlock the keys section and enter your API key.');
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const endpointInput = document.getElementById('llm-endpoint');
+  const url = (endpointInput ? endpointInput.value.trim() : '') || 'https://api.openai.com/v1/chat/completions';
+
+  const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
     body: JSON.stringify({
-      model: 'gpt-4o',
+      model,
       messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
       max_tokens: maxTokens,
       temperature: 0.3
@@ -757,6 +762,7 @@ checkApiStatus();
 refreshBtn.addEventListener('click', handleRefresh);
 
 if (tavilyInput) tavilyInput.addEventListener('input', () => { localStorage.setItem('tavily-key', tavilyInput.value.trim()); checkApiStatus(); });
+if (llmEndpointInput) llmEndpointInput.addEventListener('input', () => { localStorage.setItem('llm-endpoint', llmEndpointInput.value.trim()); });
 if (githubInput) githubInput.addEventListener('input', () => { localStorage.setItem('github-key', githubInput.value.trim()); checkApiStatus(); });
 if (notionKeyInput) notionKeyInput.addEventListener('input', () => { localStorage.setItem('notion-key', notionKeyInput.value.trim()); checkApiStatus(); });
 if (notionPageInput) notionPageInput.addEventListener('input', () => { localStorage.setItem('notion-page-id', notionPageInput.value.trim()); checkApiStatus(); });
