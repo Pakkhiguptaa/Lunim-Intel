@@ -586,9 +586,9 @@ async function syncToNotion(enrichedCompetitors, liveSignals, prompt) {
 // ─── LLM Call ───
 async function callLLM(systemPrompt, userPrompt, maxTokens = 2000) {
   const token = githubInput ? githubInput.value.trim() : '';
-  if (!token) throw new Error('LLM API Key is required. Unlock the keys section and enter your GitHub token.');
+  if (!token) throw new Error('LLM API Key is required. Unlock the keys section and enter your OpenAI API key.');
 
-  const response = await fetch('https://models.inference.ai.azure.com/chat/completions', {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
     body: JSON.stringify({

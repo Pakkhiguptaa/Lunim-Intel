@@ -79,10 +79,29 @@
           </div>
         </div>
         <div class="keys-field">
-          <label class="keys-label">🤖 LLM API Key (GitHub Token)</label>
+          <label class="keys-label">🤖 LLM API Key (OpenAI)</label>
           <div class="keys-input-row">
-            <input type="password" id="github-key" placeholder="github_pat_..." autocomplete="off">
+            <input type="password" id="github-key" placeholder="sk-..." autocomplete="off">
             <button class="toggle-visibility" type="button">👁</button>
+          </div>
+        </div>
+        <div class="keys-field">
+          <label class="keys-label">📝 Notion API Key</label>
+          <div class="keys-input-row">
+            <input type="password" id="notion-key" placeholder="ntn_..." autocomplete="off">
+            <button class="toggle-visibility" type="button">👁</button>
+          </div>
+        </div>
+        <div class="keys-field">
+          <label class="keys-label">📄 Notion Parent Page ID</label>
+          <div class="keys-input-row">
+            <input type="text" id="notion-page-id" placeholder="32d64be3aa8c803193f3c298e97e10c9" autocomplete="off">
+          </div>
+        </div>
+        <div class="keys-field">
+          <label class="keys-label">🗄️ Notion Database ID (Auto-filled)</label>
+          <div class="keys-input-row">
+            <input type="text" id="notion-db-id" placeholder="Will be created/filled on first sync" autocomplete="off">
           </div>
         </div>
         <span class="keys-note">Keys stored in browser only</span>
