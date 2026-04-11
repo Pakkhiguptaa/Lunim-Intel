@@ -187,8 +187,8 @@ function attemptUnlock() {
 // ─── Pre-fill API keys from LocalStorage ───
 if (tavilyInput) tavilyInput.value = localStorage.getItem('tavily-key') || '';
 if (githubInput) githubInput.value = localStorage.getItem('github-key') || '';
-const llmEndpointInput = document.getElementById('llm-endpoint');
-if (llmEndpointInput) llmEndpointInput.value = localStorage.getItem('llm-endpoint') || '';
+const llmProviderSelect = document.getElementById('llm-provider');
+if (llmProviderSelect) llmProviderSelect.value = localStorage.getItem('llm-provider') || 'openai';
 const _defaults = window.LUNIM_DEFAULTS || {};
 if (notionKeyInput) notionKeyInput.value = localStorage.getItem('notion-key') || _defaults.notionKey || '';
 if (notionPageInput) notionPageInput.value = localStorage.getItem('notion-page-id') || _defaults.notionPageId || '';
@@ -587,14 +587,43 @@ async function syncToNotion(enrichedCompetitors, liveSignals, prompt) {
 
 // ─── LLM Call ───
 async function callLLM(systemPrompt, userPrompt, maxTokens = 2000) {
-  const token = githubInput ? githubInput.value.trim() : '';
-  if (!token) throw new Error('LLM API Key is required. Unlock the keys section and enter your API key.');
+  const token = (githubInput ? githubInput.value.trim() : '') || _defaults.notionKey || '';
+  if (!token) throw new Error('API Key is required. Unlock the keys section and select a provider.');
 
-  const endpointInput = document.getElementById('llm-endpoint');
-  const modelInput = document.getElementById('llm-model');
-  const url = (endpointInput ? endpointInput.value.trim() : '') || 'https://api.openai.com/v1/chat/completions';
-  const model = (modelInput ? modelInput.value.trim() : '') || 'gpt-4o';
+  const providerSelect = document.getElementById('llm-provider');
+  const provider = providerSelect ? providerSelect.value : 'openai';
 
+  const PROVIDERS = {
+    openai:      { url: 'https://api.openai.com/v1/chat/completions',                      model: 'gpt-4o' },
+    perplexity:  { url: 'https://api.perplexity.ai/chat/completions',                      model: 'sonar-pro' },
+    claude:      { url: 'https://api.anthropic.com/v1/messages',                           model: 'claude-sonnet-4-6' },
+    gemini:      { url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', model: 'gemini-2.0-flash' },
+    grok:        { url: 'https://api.x.ai/v1/chat/completions',                            model: 'grok-2-latest' },
+  };
+
+  const { url, model } = PROVIDERS[provider] || PROVIDERS.openai;
+
+  // Anthropic uses a different API format
+  if (provider === 'claude') {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': token, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model,
+        max_tokens: maxTokens,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`LLM Error (${response.status}): ${errorBody}`);
+    }
+    const data = await response.json();
+    return data.content?.[0]?.text?.trim() || '';
+  }
+
+  // All other providers use OpenAI-compatible format
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -764,10 +793,7 @@ checkApiStatus();
 refreshBtn.addEventListener('click', handleRefresh);
 
 if (tavilyInput) tavilyInput.addEventListener('input', () => { localStorage.setItem('tavily-key', tavilyInput.value.trim()); checkApiStatus(); });
-if (llmEndpointInput) llmEndpointInput.addEventListener('input', () => { localStorage.setItem('llm-endpoint', llmEndpointInput.value.trim()); });
-const llmModelInput = document.getElementById('llm-model');
-if (llmModelInput) llmModelInput.value = localStorage.getItem('llm-model') || '';
-if (llmModelInput) llmModelInput.addEventListener('input', () => { localStorage.setItem('llm-model', llmModelInput.value.trim()); });
+if (llmProviderSelect) llmProviderSelect.addEventListener('change', () => { localStorage.setItem('llm-provider', llmProviderSelect.value); });
 if (githubInput) githubInput.addEventListener('input', () => { localStorage.setItem('github-key', githubInput.value.trim()); checkApiStatus(); });
 if (notionKeyInput) notionKeyInput.addEventListener('input', () => { localStorage.setItem('notion-key', notionKeyInput.value.trim()); checkApiStatus(); });
 if (notionPageInput) notionPageInput.addEventListener('input', () => { localStorage.setItem('notion-page-id', notionPageInput.value.trim()); checkApiStatus(); });

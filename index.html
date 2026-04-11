@@ -79,19 +79,21 @@
           </div>
         </div>
         <div class="keys-field">
-          <label class="keys-label">🤖 LLM API Key</label>
+          <label class="keys-label">🤖 AI Provider</label>
+          <select id="llm-provider" class="keys-select">
+            <option value="openai">OpenAI — GPT-4o</option>
+            <option value="perplexity">Perplexity — Sonar Pro</option>
+            <option value="claude">Anthropic — Claude Sonnet</option>
+            <option value="gemini">Google — Gemini 2.0 Flash</option>
+            <option value="grok">xAI — Grok 2</option>
+          </select>
+        </div>
+        <div class="keys-field">
+          <label class="keys-label">🔑 API Key</label>
           <div class="keys-input-row">
-            <input type="password" id="github-key" placeholder="sk-..." autocomplete="off">
+            <input type="password" id="github-key" placeholder="Paste your API key here..." autocomplete="off">
             <button class="toggle-visibility" type="button">👁</button>
           </div>
-        </div>
-        <div class="keys-field">
-          <label class="keys-label">🌐 LLM Endpoint <span style="opacity:0.5;font-size:0.75rem">(optional, defaults to OpenAI)</span></label>
-          <input type="text" id="llm-endpoint" placeholder="https://api.openai.com/v1/chat/completions" autocomplete="off">
-        </div>
-        <div class="keys-field">
-          <label class="keys-label">🧠 Model Name <span style="opacity:0.5;font-size:0.75rem">(optional, defaults to gpt-4o)</span></label>
-          <input type="text" id="llm-model" placeholder="gpt-4o" autocomplete="off">
         </div>
         <div class="keys-field">
           <label class="keys-label">📝 Notion API Key</label>
