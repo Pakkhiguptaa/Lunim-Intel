@@ -451,6 +451,7 @@ body {
 
 .keys-input-row input {
   width: 100%;
+  box-sizing: border-box;
   padding: 0.45rem 2rem 0.45rem 0.65rem;
   background: rgba(0,0,0,0.3);
   border: 1px solid rgba(255,255,255,0.08);
